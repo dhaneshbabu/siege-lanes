@@ -33,6 +33,7 @@ export class Arena {
   constructor({ layout, players }) {
     const n = layout.n;
     this.n = n;
+    this.spawns = layout.spawns.map((s) => ({ x: s.x, y: s.y }));
     this.tiles = Uint8Array.from(layout.tiles);
     this.hidden = new Map(layout.hidden); // power-ups still inside crates
     this.items = new Map(); // power-ups lying on the floor: cell -> kind
@@ -280,7 +281,7 @@ export class Arena {
     const owner = this.players[b.owner];
     owner.active = Math.max(0, owner.active - 1);
     const cells = this.blast(b.x, b.y, b.range, true, b.owner);
-    this.ev({ t: 'blast', owner: b.owner, cell: b.cell, size: cells.length });
+    this.ev({ t: 'blast', owner: b.owner, cell: b.cell, size: cells.length, cells });
   }
 
   // ---------- closing in ----------

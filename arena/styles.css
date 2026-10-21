@@ -258,27 +258,52 @@ button { font: inherit; color: inherit; }
 }
 .skip-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+/* Your power-ups, each with a name and a meter you can read at a glance. */
 .powers {
   grid-area: powers;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
   padding: 6px var(--gutter-r) 0 var(--gutter-l);
 }
 .pw {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 9px 4px 5px;
+  gap: 6px;
+  min-width: 0;
+  padding: 5px 7px 5px 5px;
   border: 1px solid var(--mortar);
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--stone);
 }
-.pw img { width: 22px; height: 22px; }
-.pw b { font: 700 1rem/1 var(--f-mono); font-variant-numeric: tabular-nums; }
-.pw small { font: 600 0.75rem/1 var(--f-body); color: var(--ash); }
-.pw.up { animation: pw-up 0.7s ease-out; }
-@keyframes pw-up { from { background: var(--brass); } to { background: var(--stone); } }
+.pw img { width: 30px; height: 30px; flex: none; }
+.pw-txt { display: grid; gap: 4px; min-width: 0; }
+.pw small { font: 700 0.75rem/1 var(--f-body); color: var(--ash); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pw-meter { display: flex; flex-wrap: nowrap; align-items: center; gap: 2px; min-height: 12px; overflow: hidden; }
+.pw-meter i { display: block; flex: none; }
+/* Kegs: little barrels, solid when ready, hollow while one of yours is down. */
+.pw-meter.kegs i { width: 8px; height: 12px; border-radius: 4px 4px 4px 4px / 5px 5px 5px 5px; background: #b06a30; box-shadow: inset 0 3px 0 -1px #e2b25e, inset 0 -3px 0 -1px #e2b25e; }
+.pw-meter.kegs i.out { background: transparent; box-shadow: inset 0 0 0 1.5px #8a6a4a; }
+/* Reach and speed: segments that fill up. */
+.pw-meter.reach i, .pw-meter.speed i { width: 6px; height: 10px; border-radius: 2px; background: var(--stone-3); }
+.pw-meter.reach i.on { background: linear-gradient(#ffd862, #e07f0c); }
+.pw-meter.speed i.on { background: linear-gradient(#8ae0ff, #2a86c2); }
+.pw.up { animation: pw-up 0.8s ease-out; }
+@keyframes pw-up { 0% { background: #5b4a1e; border-color: var(--brass); transform: scale(1.06); } 100% { background: var(--stone); transform: none; } }
+
+.scene-wrap { margin-top: 10px; }
+.menu-scene { display: block; width: 100%; height: 150px; border-radius: 12px; }
+.banner-tip {
+  max-width: 19rem;
+  margin-top: 6px !important;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(21, 26, 34, 0.82);
+  font: 600 0.875rem/1.3 var(--f-body);
+  color: var(--parchment);
+  text-shadow: none !important;
+}
+.banner-tip:empty { display: none; }
 
 .pad {
   grid-area: pad;
@@ -417,7 +442,7 @@ button { font: inherit; color: inherit; }
 .game.side .chips, .game.side .chips.compact { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
 .game.side .chips.compact .chip .nm { display: inline; }
 .game.side .chip { justify-content: space-between; padding: 4px 8px; }
-.game.side .powers { flex-direction: column; align-items: flex-end; justify-content: flex-start; padding: 2px 0 0; gap: 6px; }
+.game.side .powers { grid-template-columns: minmax(0, 1fr); align-content: start; padding: 2px 0 0; gap: 6px; }
 .game.side .pad { display: contents; }
 .game.side .stick-zone { grid-area: stick; }
 .game.side .keg-zone { grid-area: keg; }

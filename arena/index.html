@@ -30,6 +30,7 @@
       <p class="eyebrow">Courtyard brawl for phones</p>
       <h1 class="wordmark">Powder Keg</h1>
     </div>
+    <div class="wrap scene-wrap"><canvas id="menu-scene" class="menu-scene" aria-hidden="true"></canvas></div>
   </header>
   <div class="wall" aria-hidden="true"></div>
   <main class="wrap menu-main">
@@ -91,14 +92,24 @@
       <p class="banner-kicker" id="banner-kicker"></p>
       <p class="banner-main" id="banner-main"></p>
       <p class="banner-sub" id="banner-sub"></p>
+      <p class="banner-tip" id="banner-tip"></p>
     </div>
     <button class="skip-btn" id="btn-skip" type="button" hidden>Skip to the next round</button>
   </div>
 
   <div class="powers" id="powers" aria-label="Your power-ups">
-    <span class="pw" id="pw-keg"><img alt=""><b>1</b><small>kegs</small></span>
-    <span class="pw" id="pw-fire"><img alt=""><b>2</b><small>blast</small></span>
-    <span class="pw" id="pw-boots"><img alt=""><b>0</b><small>boots</small></span>
+    <div class="pw" id="pw-keg" title="Kegs: how many you can have down at once. Filled ones are ready.">
+      <img alt="">
+      <span class="pw-txt"><small>Kegs</small><span class="pw-meter kegs" id="pw-keg-m"></span></span>
+    </div>
+    <div class="pw" id="pw-fire" title="Blast reach: how many cells your blasts reach in each direction.">
+      <img alt="">
+      <span class="pw-txt"><small>Blast reach</small><span class="pw-meter reach" id="pw-fire-m"></span></span>
+    </div>
+    <div class="pw" id="pw-boots" title="Speed: how fast you run.">
+      <img alt="">
+      <span class="pw-txt"><small>Speed</small><span class="pw-meter speed" id="pw-boots-m"></span></span>
+    </div>
   </div>
 
   <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -155,8 +166,10 @@
       <p>A keg bursts about two seconds after you drop it, in a cross along the row and the column. Stone stops a blast. A crate stops it too, and breaks. A blast that reaches another keg sets it off at once.</p>
       <p>Your own blasts can get you, so drop a keg and get round a corner. In 2 v 2, your ally's blasts don't hurt you.</p>
       <h3>Power-ups</h3>
-      <p>Some crates hide a power-up. Walk over it to pick it up. Blasts burn power-ups lying on the ground.</p>
+      <p>About one crate in three hides a power-up: a glowing coin that pops out when the crate breaks. Walk over it to pick it up. Its name shows when you get close. A blast that reaches a power-up on the ground burns it.</p>
       <ul class="legend" id="legend-powers"></ul>
+      <p>The panel under the courtyard shows what you have: how many kegs you can have down at once (filled ones are ready), how far your blasts reach, and how fast you run.</p>
+      <p>Before a keg goes off, the cells it will hit glow red, getting redder as the fuse burns down. Pick up Bigger blast and you'll see your red cross grow.</p>
       <h3>Closing in</h3>
       <p>About a minute into each round, stone starts falling from the edges inwards (a red square marks the next spot) until only the middle is left. Then comes the last stand: kegs burn faster and every blast reaches all the way across. A few seconds later the stone starts falling again. If everyone left is caught at the same moment, the round is a draw.</p>
       <h3>Tips</h3>

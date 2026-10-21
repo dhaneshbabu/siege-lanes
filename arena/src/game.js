@@ -1,6 +1,6 @@
 // A match: rounds in fresh courtyards until a side reaches the target number of round wins.
 // Shared by the page and the balance tool.
-import { FORMATS } from './config.js';
+import { FORMATS, THEME_IDS } from './config.js';
 import { generateArena } from './map.js';
 import { Arena } from './sim.js';
 import { Bot } from './bot.js';
@@ -46,6 +46,7 @@ export function createMatch({ format = 'duel', difficulty = 'normal', seed = ran
       const rseed = (seed + Math.imul(this.roundNo, 2654435761)) >>> 0;
       const layout = generateArena(f, rseed);
       this.arena = new Arena({ layout, players });
+      this.arena.theme = THEME_IDS[(this.roundNo - 1) % THEME_IDS.length];
       this.bots = [];
       this.arena.players.forEach((p, i) => {
         if (p.kind === 'bot') this.bots.push(new Bot(this.arena, i, p.difficulty, mulberry32((rseed ^ Math.imul(i + 1, 40503)) >>> 0)));

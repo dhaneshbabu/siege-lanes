@@ -27,12 +27,12 @@ export const CRATE_FILL = 0.58; // share of open cells (away from the corners) t
 export const POWER_SHARE = 0.4; // share of crates hiding a power-up
 export const POWER_MIX = [['keg', 0.38], ['fire', 0.38], ['boots', 0.24]];
 export const POWERS = {
-  keg: { name: 'Extra keg', tip: 'Drop one more keg at a time.' },
-  fire: { name: 'Bigger blast', tip: 'Your blasts reach one cell further.' },
-  boots: { name: 'Boots', tip: 'Run faster.' },
+  keg: { name: 'Extra keg', short: '+1 Keg', tip: 'You can have one more keg down at a time.' },
+  fire: { name: 'Bigger blast', short: 'Bigger blast', tip: 'Your blasts reach one more cell in every direction.' },
+  boots: { name: 'Speed boots', short: 'Speed up', tip: 'You run faster.' },
 };
 
-export const COUNTDOWN = 1.8; // seconds before a round starts
+export const COUNTDOWN = 2.4; // seconds before a round starts
 export const HURRY_AT = { 11: 55, 13: 65 }; // seconds into a round (by courtyard size) when stone starts falling from the edges inwards
 export const DROP_EVERY = 0.6; // seconds between falling stones (four at a time, one per side)
 export const END_GRACE = 1.2; // seconds after the last rival falls before the round is decided
@@ -63,3 +63,6 @@ export const DIFFICULTIES = {
 };
 
 export const WIN_TARGETS = [2, 3];
+
+// Each round is fought in the next courtyard in this list (looks only; the rules don't change).
+export const THEME_IDS = ['castle', 'winter', 'forest'];

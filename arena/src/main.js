@@ -1,8 +1,8 @@
 // App shell for Powder Keg: menu, rounds, the frame loop, controls, HUD and sound.
 // Practice mode: you (seat 0) against bots.
-import { DT, TICK_HZ, SIDES, FORMATS, DIFFICULTIES, WIN_TARGETS, POWERS } from './config.js';
+import { DT, TICK_HZ, SIDES, FORMATS, DIFFICULTIES, WIN_TARGETS, POWERS, MAX_KEGS, MAX_RANGE, MAX_SPEED_LV } from './config.js';
 import { createMatch } from './game.js';
-import { ArenaRenderer, powerThumb, pieceThumb, kegIcon } from './render.js';
+import { ArenaRenderer, powerThumb, pieceThumb, kegIcon, drawMenuScene, THEMES } from './render.js';
 import { Controls } from './input.js';
 import { Sfx } from './audio.js';
 
@@ -28,7 +28,7 @@ const settings = {
   sound: store.get('pk.sound', true) !== false,
 };
 const record = store.get('pk.record', {});
-const coached = Object.assign({ moved: false, kegged: false, powers: {} }, store.get('pk.coached', {}));
+const coached = Object.assign({ moved: false, kegged: false, reveal: false, powers: {} }, store.get('pk.coached', {}));
 const saveCoach = () => store.set('pk.coached', coached);
 
 const sfx = new Sfx();
@@ -70,6 +70,16 @@ const fmtTime = (sec) => {
   const s = Math.max(0, Math.ceil(sec));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
+
+// Shown under the countdown, one per round.
+const TIPS = [
+  'Crates hide power-ups: glowing coins. Walk over one to grab it.',
+  'Cells glowing red are about to be blasted. Get out of the red!',
+  '+1 Keg lets you have more kegs down at once. Bigger blast makes your red cross longer.',
+  'Drop a keg, then duck round a corner: blasts only travel in straight lines.',
+  'A blast that reaches another keg sets it off at once. Chain them!',
+  'Speed up makes you run faster. Handy for getting clear of your own kegs.',
+];
 
 // ---------- toasts ----------
 const recentToasts = new Map();
@@ -125,6 +135,20 @@ function show(id) {
   $('menu').hidden = id !== 'menu';
   $('game').hidden = id !== 'game';
   document.body.style.overflow = id === 'game' ? 'hidden' : '';
+  if (id === 'menu') startMenuScene();
+}
+
+// The animated picture at the top of the menu; it only runs while the menu is showing.
+let sceneRaf = 0;
+function startMenuScene() {
+  cancelAnimationFrame(sceneRaf);
+  const c = $('menu-scene');
+  const loop = (now) => {
+    if ($('menu').hidden) return;
+    drawMenuScene(c, now);
+    sceneRaf = requestAnimationFrame(loop);
+  };
+  sceneRaf = requestAnimationFrame(loop);
 }
 
 // ---------- how to play ----------
@@ -198,12 +222,13 @@ function startRound() {
   acc = 0;
   you = null;
   lastCount = null;
-  renderer.fx.length = 0;
+  renderer.reset();
   controls.reset();
   controls.enabled = false;
   for (const el of chipEls) el.classList.remove('out');
   applyLayoutMode();
-  setBanner(`Round ${match.roundNo}`, '', scoreLine(), true);
+  setBanner(roundKicker(), '', scoreLine(), true);
+  $('banner-tip').textContent = TIPS[(match.roundNo - 1) % TIPS.length];
   if (!coached.moved && match.roundNo === 1) {
     setTimeout(() => { if (phase === 'play' && !coached.moved) toast('Drag in the lower left to run. Tap Keg to drop a powder keg.', '', 6000); }, 2200);
   }
@@ -252,6 +277,11 @@ function scoreLine() {
   return parts.join(' · ');
 }
 
+function roundKicker() {
+  const th = THEMES[arena.theme];
+  return th ? `Round ${match.roundNo} · ${th.name}` : `Round ${match.roundNo}`;
+}
+
 function setBanner(kicker, main, sub, dim = false, cls = '') {
   const b = $('banner');
   b.hidden = false;
@@ -265,7 +295,10 @@ function setBanner(kicker, main, sub, dim = false, cls = '') {
   void b.offsetWidth;
   b.classList.add('pop');
 }
-function hideBanner() { $('banner').hidden = true; }
+function hideBanner() {
+  $('banner').hidden = true;
+  $('banner-tip').textContent = '';
+}
 
 /** You're out: play the rest of the round instantly. */
 function skipRound() {
@@ -299,7 +332,8 @@ function roundOver() {
     main = settings.format === 'teams' ? 'They win' : `${SIDES[winner].name} wins`;
   }
   const sub = scoreLine();
-  setBanner(`Round ${match.roundNo}`, main, sub, true, cls);
+  setBanner(roundKicker(), main, sub, true, cls);
+  $('banner-tip').textContent = '';
   updateChips(true, team);
   sfx.play(team != null && team === myTeam() ? 'roundWin' : 'roundLose');
   betweenTimer = setTimeout(() => {
@@ -376,10 +410,10 @@ function tick(now) {
 
 function countdown() {
   const left = (arena.startTick - arena.tick) / TICK_HZ;
-  const n = Math.ceil(left / 0.6);
+  const n = Math.ceil(left / 0.8);
   if (n > 0 && n <= 3 && n !== lastCount) {
     lastCount = n;
-    setBanner(`Round ${match.roundNo}`, String(n), scoreLine(), true);
+    setBanner(roundKicker(), String(n), scoreLine(), true);
     sfx.play('tick');
   }
 }
@@ -394,6 +428,7 @@ function handleEvents(now) {
       case 'go':
         phase = 'play';
         controls.enabled = true;
+        $('banner-tip').textContent = '';
         setBanner('', 'Go!', '', false);
         setTimeout(() => { if (phase === 'play') hideBanner(); }, 600);
         sfx.play('go');
@@ -430,6 +465,16 @@ function handleEvents(now) {
           }
         }
         break;
+      case 'reveal': {
+        const x = e.cell % arena.n;
+        const y = Math.floor(e.cell / arena.n);
+        if (!coached.reveal && me.alive && Math.abs(x - me.x) + Math.abs(y - me.y) <= 5) {
+          coached.reveal = true;
+          saveCoach();
+          toast(`A power-up popped out: ${POWERS[e.kind].name}. Walk over the glowing coin to grab it.`, 'good', 4200);
+        }
+        break;
+      }
       case 'death':
         onDeath(e);
         break;
@@ -544,12 +589,7 @@ function updateHud() {
     $('clock-box').classList.toggle('hurry', hurry);
   }
   const me = arena.players[ME];
-  const kegB = $('pw-keg').querySelector('b');
-  const fireB = $('pw-fire').querySelector('b');
-  const bootB = $('pw-boots').querySelector('b');
-  if (kegB.textContent !== String(me.kegs)) kegB.textContent = String(me.kegs);
-  if (fireB.textContent !== String(me.range)) fireB.textContent = String(me.range);
-  if (bootB.textContent !== String(me.speedLv)) bootB.textContent = String(me.speedLv);
+  updateMeters(me);
   const ready = me.alive ? me.kegs - me.active : 0;
   setText('keg-count', String(ready));
   const empty = ready <= 0 || !me.alive;
@@ -557,6 +597,33 @@ function updateHud() {
     cache.empty = empty;
     $('keg-btn').classList.toggle('empty', empty);
   }
+}
+
+/** The power-up panel: barrels for kegs, segments for blast reach and speed. */
+function buildMeters() {
+  const fill = (id, count) => {
+    const box = $(id);
+    box.textContent = '';
+    for (let i = 0; i < count; i++) box.appendChild(document.createElement('i'));
+  };
+  fill('pw-keg-m', MAX_KEGS);
+  fill('pw-fire-m', MAX_RANGE);
+  fill('pw-boots-m', MAX_SPEED_LV + 1);
+}
+function updateMeters(me) {
+  const key = `${me.kegs}|${me.active}|${me.range}|${me.speedLv}|${me.alive}`;
+  if (cache.meters === key) return;
+  cache.meters = key;
+  const ready = me.alive ? me.kegs - me.active : 0;
+  [...$('pw-keg-m').children].forEach((el, i) => {
+    el.hidden = i >= me.kegs;
+    el.classList.toggle('out', i >= ready);
+  });
+  [...$('pw-fire-m').children].forEach((el, i) => el.classList.toggle('on', i < me.range));
+  [...$('pw-boots-m').children].forEach((el, i) => el.classList.toggle('on', i <= me.speedLv));
+  $('pw-keg').setAttribute('aria-label', `Kegs: ${ready} of ${me.kegs} ready`);
+  $('pw-fire').setAttribute('aria-label', `Blast reach: ${me.range} cells`);
+  $('pw-boots').setAttribute('aria-label', `Speed: level ${me.speedLv + 1} of ${MAX_SPEED_LV + 1}`);
 }
 
 // ---------- pause / end ----------
@@ -657,6 +724,7 @@ function goFullscreen() {
 document.addEventListener('fullscreenchange', () => { if (running) setTimeout(layout, 50); });
 
 // ---------- boot ----------
+buildMeters();
 fillLegend();
 initMenu();
 show('menu');
