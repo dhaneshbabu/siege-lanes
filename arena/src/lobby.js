@@ -1,10 +1,9 @@
 // The lobby for Play with friends: the game code and invite, who's in which seat, and the match
 // settings. It only draws what it's given and reports taps; main.js does the networking.
 /* global qrcode */
-import { SIDES, FORMATS } from './config.js';
+import { FORMATS, sidesFor } from './config.js';
 
 const $ = (id) => document.getElementById(id);
-export const PLAIN = { azure: 'blue', gules: 'red', vert: 'green', purpure: 'purple' };
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export class LobbyView {
@@ -84,7 +83,7 @@ export class LobbyView {
       if (teams && !s.outside && (s.i === 0 || s.i === 2)) {
         const g = document.createElement('li');
         g.className = 'seat-group';
-        g.textContent = s.i === 0 ? 'Blue and red side' : 'Green and purple side';
+        g.textContent = s.i === 0 ? 'Blue side' : 'Red side';
         ul.appendChild(g);
       }
       if (s.outside && s === vm.seats.find((q) => q.outside)) {
@@ -95,7 +94,7 @@ export class LobbyView {
       }
       const li = document.createElement('li');
       li.className = 'seat';
-      const side = SIDES[s.i];
+      const side = sidesFor(vm.format)[s.i];
       const el = document.createElement(vm.editable ? 'button' : 'div');
       el.className = 'seat-row';
       if (vm.editable) {
@@ -111,7 +110,7 @@ export class LobbyView {
         + '<span class="seat-txt"><span class="seat-name"></span><span class="seat-sub"></span></span><span class="seat-tags"></span>';
       el.querySelector('.shield').style.fill = side.color;
       el.querySelector('.seat-name').textContent = s.name;
-      let sub = `${cap(PLAIN[side.key])} knight`;
+      let sub = `${cap(side.plain)} knight`;
       if (s.kind === 'guest') sub += s.online ? (s.ping != null ? ` · ${Math.round(s.ping)} ms` : '') : ' · reconnecting…';
       el.querySelector('.seat-sub').textContent = sub;
       const tags = el.querySelector('.seat-tags');

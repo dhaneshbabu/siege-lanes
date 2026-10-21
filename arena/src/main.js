@@ -1,8 +1,8 @@
 // App shell for Powder Keg: menu, lobby, rounds, the frame loop, controls, HUD and sound.
 // Three ways to play: practice (you against bots on this phone), host (this phone runs the game and
 // friends' phones join it) and guest (this phone plays in a game another phone runs).
-import { DT, TICK_HZ, SIDES, FORMATS, DIFFICULTIES, WIN_TARGETS, POWERS, MAX_KEGS, MAX_RANGE, MAX_SPEED_LV, THEME_IDS } from './config.js';
-import { createMatch, SEAT_BOT_NAMES } from './game.js';
+import { DT, TICK_HZ, sidesFor, FORMATS, DIFFICULTIES, WIN_TARGETS, POWERS, MAX_KEGS, MAX_RANGE, MAX_SPEED_LV, THEME_IDS } from './config.js';
+import { createMatch, botName } from './game.js';
 import { generateArena } from './map.js';
 import { Arena } from './sim.js';
 import { Bot } from './bot.js';
@@ -12,7 +12,7 @@ import { Controls } from './input.js';
 import { Sfx } from './audio.js';
 import { HostRoom, GuestLink, normCode, cleanName, randomId } from './net.js';
 import { encodeInput, applyInput, validCode, snapshotArena, restoreArena, hashArena, forecastFrom, stepForecast } from './sync.js';
-import { LobbyView, PLAIN } from './lobby.js';
+import { LobbyView } from './lobby.js';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -133,9 +133,17 @@ const myTeam = () => match.players[me].team;
 const isAlly = (i) => i !== me && match.players[i].team === myTeam();
 const isTeams = () => match.format.id === 'teams';
 const nameOf = (i) => match.players[i].name;
+/** The label over your teammate at the start of a round: their name if they're a friend. */
+function allyTag() {
+  if (!match || !isTeams()) return '';
+  const i = match.players.findIndex((p, j) => j !== me && p.team === myTeam());
+  return online() && i >= 0 && match.players[i].kind === 'human' ? nameOf(i).toUpperCase() : 'ALLY';
+}
+/** The colours seat i wears in this match (2 v 2 has team colours). */
+const sideOf = (i) => sidesFor(match.format)[i];
 function shortName(i) {
   if (i === me) return 'You';
-  if (!online()) return isAlly(i) ? 'Ally' : SIDES[i].name;
+  if (!online()) return isAlly(i) ? 'Ally' : sideOf(i).name;
   return nameOf(i);
 }
 function fullName(i) {
@@ -166,7 +174,7 @@ function roundTip() {
   const tip = TIPS[(match.roundNo - 1) % TIPS.length];
   if (!online() || !arena) return tip;
   // With friends, colours depend on the seat: say which knight is yours.
-  return `You're the ${PLAIN[SIDES[me].key]} knight, ${cornerOf(arena, me)}. ${match.roundNo === 1 ? '' : tip}`.trim();
+  return `You're the ${sideOf(me).plain} knight, ${cornerOf(arena, me)}. ${match.roundNo === 1 ? '' : tip}`.trim();
 }
 
 // ---------- toasts ----------
@@ -350,6 +358,7 @@ function beginMatch(m, md, seat) {
   mode = md;
   me = seat;
   match = m;
+  renderer.setSides(sidesFor(m.format));
   arena = null;
   fore = null;
   paused = false;
@@ -540,7 +549,7 @@ function showRoundResult(team) {
     cls = 'win';
   } else {
     const winner = match.players.findIndex((p) => p.team === team);
-    main = isTeams() ? 'They win' : `${online() ? nameOf(winner) : SIDES[winner].name} wins`;
+    main = isTeams() ? 'They win' : `${online() ? nameOf(winner) : sideOf(winner).name} wins`;
   }
   setBanner(roundKicker(), main, scoreLine(), true, cls);
   $('banner-tip').textContent = '';
@@ -600,7 +609,7 @@ function frame(now) {
   }
   if (arena) {
     const live = !paused && (phase === 'countdown' || phase === 'play');
-    renderer.draw(arena, { me, alpha: live ? Math.min(1, acc / DT) : 1, you }, now);
+    renderer.draw(arena, { me, alpha: live ? Math.min(1, acc / DT) : 1, you, allyTag: allyTag() }, now);
   }
   updateHud();
 }
@@ -792,7 +801,7 @@ function buildChips() {
   match.players.forEach((p, i) => {
     const el = document.createElement('div');
     el.innerHTML = '<svg class="shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg><span class="nm"></span><span class="pips"></span>';
-    el.querySelector('.shield').style.fill = SIDES[i].color;
+    el.querySelector('.shield').style.fill = sideOf(i).color;
     const pips = el.querySelector('.pips');
     for (let k = 0; k < match.target; k++) pips.appendChild(Object.assign(document.createElement('i'), { className: 'pip' }));
     chipEls.push(el);
@@ -1016,7 +1025,7 @@ function renderStandings() {
     const tt = match.totals[i] || {};
     const li = document.createElement('li');
     li.innerHTML = '<svg class="shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg><span class="st-name"></span><span class="st-fig"></span>';
-    li.querySelector('.shield').style.fill = SIDES[i].color;
+    li.querySelector('.shield').style.fill = sideOf(i).color;
     li.querySelector('.st-name').textContent = i === me ? `${p.name} (you)` : p.kind === 'bot' ? `${p.name} (bot)` : p.name;
     li.querySelector('.st-fig').textContent = `${match.wins.get(p.team)} won · ${tt.kills | 0} KO`;
     if (p.team === match.winner) li.classList.add('won');
@@ -1450,7 +1459,7 @@ function hostStartMatch(rematch = false) {
   const sides = [];
   for (let i = 0; i < f.players; i++) {
     const s = H.seats[i];
-    sides.push(s ? { kind: 'human', name: s.name, cid: s.cid } : { kind: 'bot', name: SEAT_BOT_NAMES[i], difficulty: mp.difficulty });
+    sides.push(s ? { kind: 'human', name: s.name, cid: s.cid } : { kind: 'bot', name: botName(f, i), difficulty: mp.difficulty });
   }
   const hostSeat = H.seats.findIndex((s) => s && s.kind === 'host');
   H.remote = new Map();
@@ -1723,7 +1732,7 @@ function guestStartMatch(m) {
   const f = FORMATS[m.format];
   if (!f || !Array.isArray(m.players) || m.players.length !== f.players) return;
   if (!Number.isInteger(m.seat) || m.seat < 0 || m.seat >= f.players) return;
-  const players = m.players.map((p, i) => ({ name: cleanName(p && p.n) || SEAT_BOT_NAMES[i], kind: p && p.k === 'bot' ? 'bot' : 'human', team: f.teams[i] }));
+  const players = m.players.map((p, i) => ({ name: cleanName(p && p.n) || botName(f, i), kind: p && p.k === 'bot' ? 'bot' : 'human', team: f.teams[i] }));
   const teams = [...new Set(f.teams)];
   const wins = new Map(teams.map((t) => [t, 0]));
   if (Array.isArray(m.wins)) for (const w of m.wins) if (Array.isArray(w) && wins.has(w[0])) wins.set(w[0], w[1] | 0);
@@ -1940,7 +1949,7 @@ function guestLoop(now, dt) {
   G.off.y *= ease;
   if (Math.abs(G.off.x) + Math.abs(G.off.y) < 1e-3) G.off.x = G.off.y = 0;
   const live = phase === 'countdown' || phase === 'play';
-  renderer.draw(guestView(live ? Math.min(1, G.acc / DT) : 1), { me, alpha: 1, you }, now);
+  renderer.draw(guestView(live ? Math.min(1, G.acc / DT) : 1), { me, alpha: 1, you, allyTag: allyTag() }, now);
   guestNetNote(now);
 }
 

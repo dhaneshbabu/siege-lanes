@@ -2,6 +2,8 @@
 // stand up off the floor, powder kegs with spitting fuses, blasts that leave smoke and scorch marks,
 // power-up medallions with name tags, and little knights in their side's colours.
 import { FLOOR, PILLAR, CRATE, BURNING, BLOCK, SIDES, POWERS } from './config.js';
+
+const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ');
 import { ARM } from './sim.js';
 
 const TAU = Math.PI * 2;
@@ -679,6 +681,13 @@ export class ArenaRenderer {
     this.shake = [];
     this.sparkAcc = 0;
     this.me = 0; // whose knight gets the ring and the big pick-up labels
+    this.sides = SIDES; // colours by seat (2 v 2 has its own)
+  }
+
+  /** Colours by seat for the coming match. */
+  setSides(list) {
+    this.sides = list;
+    this.bgKey = '';
   }
 
   /** Fit an n×n courtyard (plus its wall) into the canvas's CSS box. */
@@ -852,7 +861,7 @@ export class ArenaRenderer {
       g.arc(tx, ty, tr * 0.58, 0, TAU);
       g.fill();
       const owner = (arena.spawns || []).findIndex((sp) => sp.x === cxi && sp.y === cyi);
-      this.flags.push({ x: tx, y: ty, color: owner >= 0 ? SIDES[owner].color : '#8f8264', dark: owner >= 0 ? SIDES[owner].dark : '#5c5340' });
+      this.flags.push({ x: tx, y: ty, color: owner >= 0 ? this.sides[owner].color : '#8f8264', dark: owner >= 0 ? this.sides[owner].dark : '#5c5340' });
     }
     // Torches or lanterns on the walls.
     this.lights = [];
@@ -1034,7 +1043,7 @@ export class ArenaRenderer {
         const p = arena.players[e.player];
         const x = this.cx(p.x);
         const y = this.cy(p.y);
-        this.spawn({ k: 'ghost', x, y, vx: 0, vy: -cs * 0.5, life: 1.1, side: SIDES[p.index], face: p.face });
+        this.spawn({ k: 'ghost', x, y, vx: 0, vy: -cs * 0.5, life: 1.1, side: this.sides[p.index], face: p.face });
         for (let k = 0; k < 6; k++) {
           const a = (k / 6) * TAU;
           this.spawn({ k: 'smoke', x: x + Math.cos(a) * cs * 0.2, y: y + Math.sin(a) * cs * 0.2, vx: Math.cos(a) * cs * 0.6, vy: Math.sin(a) * cs * 0.6 - cs * 0.3, life: 0.9, s: cs * 0.22 });
@@ -1238,16 +1247,22 @@ export class ArenaRenderer {
     }
     this.decals.length = keepDec;
 
-    // Where ticking kegs will blast: redder as the fuse burns down.
-    for (const b of arena.bombs) {
-      const left = b.fuse / (b.fuse0 || arena.fuseTicks);
-      const a = 0.08 + 0.3 * (1 - left) + (left < 0.3 ? 0.08 * Math.sin(now / 60) : 0);
-      g.fillStyle = `rgba(225, 60, 35, ${a})`;
-      for (const c of arena.blast(b.x, b.y, b.range)) {
-        if (arena.tiles[c] !== FLOOR) continue;
-        const x = c % n;
-        const y = (c - x) / n;
-        g.fillRect(this.ox + x * cs + 1, this.oy + y * cs + 1, cs - 2, cs - 2);
+    // Where ticking kegs will blast: redder as the fuse burns down. Your ally's blasts can't hurt
+    // you, so theirs glow faintly in their own colour instead (drawn first, under any red).
+    const mine = arena.players[ui.me];
+    const friendly = (b) => mine && b.owner !== ui.me && arena.players[b.owner].team === mine.team;
+    for (const pass of [true, false]) {
+      for (const b of arena.bombs) {
+        if (friendly(b) !== pass) continue;
+        const left = b.fuse / (b.fuse0 || arena.fuseTicks);
+        const a = 0.08 + 0.3 * (1 - left) + (left < 0.3 ? 0.08 * Math.sin(now / 60) : 0);
+        g.fillStyle = pass ? `rgba(${rgb(this.sides[b.owner].color)}, ${0.1 + a * 0.75})` : `rgba(225, 60, 35, ${a})`;
+        for (const c of arena.blast(b.x, b.y, b.range)) {
+          if (arena.tiles[c] !== FLOOR) continue;
+          const x = c % n;
+          const y = (c - x) / n;
+          g.fillRect(this.ox + x * cs + 1, this.oy + y * cs + 1, cs - 2, cs - 2);
+        }
       }
     }
 
@@ -1311,7 +1326,7 @@ export class ArenaRenderer {
         if (img) g.drawImage(img, this.ox + x * cs, this.oy + y * cs - lift, img.width / this.dpr, img.height / this.dpr);
       }
       for (const b of rowsKeg.get(y) || []) {
-        const tip = drawKeg(g, this.cx(b.x), this.cy(b.y), cs, b.fuse / (b.fuse0 || arena.fuseTicks), now, SIDES[b.owner].color);
+        const tip = drawKeg(g, this.cx(b.x), this.cy(b.y), cs, b.fuse / (b.fuse0 || arena.fuseTicks), now, this.sides[b.owner].color);
         if (Math.random() < sparksDue) {
           const a = -Math.PI / 2 + (Math.random() - 0.5) * 2;
           this.spawn({ k: 'spark', x: tip.fx, y: tip.fy, vx: Math.cos(a) * cs * 1.4, vy: Math.sin(a) * cs * 1.4, life: 0.25 + Math.random() * 0.15 });
@@ -1320,7 +1335,7 @@ export class ArenaRenderer {
       for (const p of rowsKnight.get(y) || []) {
         const xx = p.px + (p.x - p.px) * ui.alpha;
         const yy = p.py + (p.y - p.py) * ui.alpha;
-        drawKnight(g, this.cx(xx), this.cy(yy), cs, SIDES[p.index], p.face, p.moving ? p.walk : 0, now, { ring: p.index === ui.me });
+        drawKnight(g, this.cx(xx), this.cy(yy), cs, this.sides[p.index], p.face, p.moving ? p.walk : 0, now, { ring: p.index === ui.me });
       }
     }
 
@@ -1347,7 +1362,13 @@ export class ArenaRenderer {
     }
     this.drawParts(g, 'text');
     if (ui.you && now < ui.you.until && me && me.alive) {
-      drawTag(g, this.cx(me.x), this.cy(me.y) - cs * 0.95, 'YOU', SIDES[ui.me].color, Math.min(1, (ui.you.until - now) / 500), now);
+      const fade = Math.min(1, (ui.you.until - now) / 500);
+      drawTag(g, this.cx(me.x), this.cy(me.y) - cs * 0.95, 'YOU', this.sides[ui.me].color, fade, now);
+      // Your teammate gets a tag too, so you know who's on your side.
+      for (const p of arena.players) {
+        if (p.index === ui.me || !p.alive || p.team !== me.team) continue;
+        drawTag(g, this.cx(p.x), this.cy(p.y) - cs * 0.95, ui.allyTag || 'ALLY', this.sides[p.index].color, fade, now);
+      }
     }
     if (arena.final) {
       // The last stand: the edges glow red.

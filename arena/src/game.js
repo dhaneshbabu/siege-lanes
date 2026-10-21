@@ -1,14 +1,13 @@
 // A match: rounds in fresh courtyards until a side reaches the target number of round wins.
 // Shared by the page and the balance tool.
-import { FORMATS, THEME_IDS } from './config.js';
+import { FORMATS, THEME_IDS, sidesFor } from './config.js';
 import { generateArena } from './map.js';
 import { Arena } from './sim.js';
 import { Bot } from './bot.js';
 import { mulberry32, randomSeed } from './rng.js';
 
-const BOT_NAMES = ['Sir Gules', 'Lady Vert', 'Duke Purpure'];
-/** Bot names by seat, for games with friends where a bot can sit anywhere. */
-export const SEAT_BOT_NAMES = ['Sir Azure', 'Sir Gules', 'Lady Vert', 'Duke Purpure'];
+/** A bot's name: after the colour it wears in that seat. */
+export const botName = (format, i) => sidesFor(format)[i].bot;
 
 /**
  * format: key of FORMATS. sides: per seat { kind: 'human'|'bot', name, difficulty }.
@@ -23,7 +22,7 @@ export function createMatch({ format = 'duel', difficulty = 'normal', seed = ran
     else if (i === 0) players.push({ name: 'You', kind: 'human', team: f.teams[i] });
     else {
       const ally = f.teams[i] === f.teams[0];
-      players.push({ name: ally ? 'Ally' : BOT_NAMES[(i - 1) % BOT_NAMES.length], kind: 'bot', difficulty, team: f.teams[i] });
+      players.push({ name: ally ? 'Ally' : botName(f, i), kind: 'bot', difficulty, team: f.teams[i] });
     }
   }
   const teams = [...new Set(f.teams)];

@@ -41,13 +41,22 @@ export const FINAL_PAUSE = 12; // ...for this many seconds...
 export const FINAL_DROP_EVERY = 1.2; // ...then keeps falling, more slowly, until nothing is left
 export const FINAL_FUSE = 1.5; // in that last stand kegs burn faster, and every blast reaches all the way across
 
-// Heraldic colours, the same as the other games. Index 0 is always you.
+// Heraldic colours, the same as the other games, by seat. In practice seat 0 is always you.
 export const SIDES = [
-  { key: 'azure', name: 'Azure', color: '#3e74c8', light: '#9dbcf0', dark: '#23467f' },
-  { key: 'gules', name: 'Gules', color: '#c8443c', light: '#f0a49d', dark: '#7e2520' },
-  { key: 'vert', name: 'Vert', color: '#3a9a5c', light: '#9fd8b1', dark: '#1f5c36' },
-  { key: 'purpure', name: 'Purpure', color: '#9160bd', light: '#cfb0ea', dark: '#573477' },
+  { key: 'azure', name: 'Azure', plain: 'blue', bot: 'Sir Azure', color: '#3e74c8', light: '#9dbcf0', dark: '#23467f' },
+  { key: 'gules', name: 'Gules', plain: 'red', bot: 'Sir Gules', color: '#c8443c', light: '#f0a49d', dark: '#7e2520' },
+  { key: 'vert', name: 'Vert', plain: 'green', bot: 'Lady Vert', color: '#3a9a5c', light: '#9fd8b1', dark: '#1f5c36' },
+  { key: 'purpure', name: 'Purpure', plain: 'purple', bot: 'Duke Purpure', color: '#9160bd', light: '#cfb0ea', dark: '#573477' },
 ];
+// In 2 v 2 teammates wear two shades of one colour: blue and light blue against red and orange.
+const CELESTE = { key: 'celeste', name: 'Celeste', plain: 'light blue', bot: 'Lady Celeste', color: '#2fa9d8', light: '#a9e2f7', dark: '#16607e' };
+const TENNE = { key: 'tenne', name: 'Tenné', plain: 'orange', bot: 'Duke Tenné', color: '#e2832b', light: '#f7c896', dark: '#8a4810' };
+export const TEAM_SIDES = [SIDES[0], CELESTE, SIDES[1], TENNE];
+/** The colours by seat for a format (its id or the format itself). */
+export function sidesFor(format) {
+  const id = typeof format === 'string' ? format : format && format.id;
+  return id === 'teams' ? TEAM_SIDES : SIDES;
+}
 
 export const FORMATS = {
   duel: { id: 'duel', label: '1 v 1', players: 2, teams: [0, 1] },
