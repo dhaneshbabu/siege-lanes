@@ -59,6 +59,16 @@ const renderer = new Renderer(canvas, {
   },
 });
 const track = new TrackView($('track'));
+const canvasOpp = $('board-opp');
+const rendererOpp = new Renderer(canvasOpp, {
+  colorOf: (id) => {
+    const p = match && match.byId.get(id);
+    return p ? TINCTURES[p.color].color : TINCTURES[0].color;
+  },
+});
+// Sideways: both lanes side by side. Upright: one lane, with the strip and "watch" for the other.
+const landscapeMQ = matchMedia('(orientation: landscape)');
+let split = false;
 const colorOfPlayer = (id) => {
   const p = match && match.byId.get(id);
   return p ? TINCTURES[p.color].color : '#888';
@@ -218,7 +228,13 @@ function startMatch() {
   me = match.byId.get(ME);
   opp = match.byId.get(BOT);
   renderer.fx.length = 0;
+  rendererOpp.fx.length = 0;
   renderer.selection = null;
+  renderer.bannerColor = TINCTURES[me.color].color;
+  rendererOpp.bannerColor = TINCTURES[opp.color].color;
+  $('tag-me-shield').style.fill = TINCTURES[me.color].color;
+  $('tag-opp-shield').style.fill = TINCTURES[opp.color].color;
+  $('tag-opp-name').textContent = opp.name;
   paused = false;
   speed = 1;
   acc = 0;
@@ -239,7 +255,7 @@ function startMatch() {
   show('game');
   buildSendBar();
   buildBuildGrid();
-  layout();
+  applyLayoutMode();
   requestWakeLock();
   running = true;
   lastFrame = performance.now();
@@ -277,10 +293,10 @@ function resumeGame() {
 
 // ---------- watching the opponent's lane ----------
 function setWatching(on, quiet = false) {
+  if (split) on = false; // both lanes are already on screen
   watching = on;
   closePops();
-  renderer.fx.length = 0;
-  renderer.bannerColor = TINCTURES[(on ? opp : me).color].color;
+  rendererOpp.fx.length = 0;
   $('game').classList.toggle('is-watching', on);
   $('watching').hidden = !on;
   if (on) {
@@ -304,6 +320,31 @@ $('opp').addEventListener('click', () => {
   if (watching && !coached.watch) { coached.watch = true; store.set('sl.coached', coached); }
 });
 $('watching').addEventListener('click', () => setWatching(false));
+canvasOpp.addEventListener('click', () => { if (!split && watching) setWatching(false); });
+
+/** Pick the layout from the phone's orientation; can change mid-match. */
+function applyLayoutMode() {
+  const next = landscapeMQ.matches;
+  if (next !== split) {
+    split = next;
+    closePops();
+    renderer.fx.length = 0;
+    rendererOpp.fx.length = 0;
+    if (split && watching) setWatching(false, true);
+  }
+  $('game').classList.toggle('split', split);
+  if (running || match) layout();
+}
+const onOrientation = () => { if (match) applyLayoutMode(); };
+if (landscapeMQ.addEventListener) landscapeMQ.addEventListener('change', onOrientation);
+else if (landscapeMQ.addListener) landscapeMQ.addListener(onOrientation);
+
+function flashTag(id) {
+  const el = $(id);
+  el.classList.add('hurt');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('hurt'), 700);
+}
 
 /** True when something on the player's own road is getting close to their gate. */
 function gateThreatened() {
@@ -330,27 +371,30 @@ function frame(now) {
   }
   handleEvents(now);
   const alpha = paused || match.over ? 1 : Math.min(1, acc / DT);
-  if (watching) renderer.draw(opp.lane, alpha, now, {});
-  else renderer.draw(me.lane, alpha, now, { gold: me.lane.gold, pulse: !firstBuildAt });
-  const shown = watching ? me : opp;
-  track.draw(shown.lane, { castleColor: TINCTURES[shown.color].color, colorOf: colorOfPlayer, highlight: ME }, alpha, now);
+  if (split || !watching) renderer.draw(me.lane, alpha, now, { gold: me.lane.gold, pulse: !firstBuildAt });
+  if (split || watching) rendererOpp.draw(opp.lane, alpha, now, {});
+  if (!split) {
+    const shown = watching ? me : opp;
+    track.draw(shown.lane, { castleColor: TINCTURES[shown.color].color, colorOf: colorOfPlayer, highlight: ME }, alpha, now);
+  }
   updateHud(now);
 }
 
 function handleEvents(now) {
   const mine = me.lane;
   const theirs = opp.lane;
-  renderer.addEvents((watching ? theirs : mine).events, now);
+  if (split || !watching) renderer.addEvents(mine.events, now);
+  if (split || watching) rendererOpp.addEvents(theirs.events, now);
   for (const e of mine.events) {
     if (e.t === 'leak') {
       sfx.play('leak');
       buzz(70);
       flashStat('hud-lives-box', 'hurt');
-      if (watching) {
+      if (watching && !split) {
         track.hit(e.lost, now);
         dangerUntil = now + 3000;
       }
-    } else if (!watching && e.t === 'fire' && e.kind === 'cannon') {
+    } else if ((split || !watching) && e.t === 'fire' && e.kind === 'cannon') {
       sfx.play('boom');
     } else if (e.t === 'income') {
       flashStat('hud-gold-box', 'flash');
@@ -358,7 +402,8 @@ function handleEvents(now) {
   }
   for (const e of theirs.events) {
     if (e.t !== 'leak') continue;
-    if (!watching) track.hit(e.lost, now);
+    if (split) flashTag('tag-opp');
+    else if (!watching) track.hit(e.lost, now);
     if (e.sentBy === ME) {
       throughBuffer.lives += e.lost;
       throughBuffer.units[e.kind] = (throughBuffer.units[e.kind] || 0) + 1;
@@ -377,7 +422,7 @@ function handleEvents(now) {
       case 'send': {
         if (e.to !== ME) break;
         const s = SEND_BY_ID[e.sendId];
-        if (!watching) {
+        if (!watching && !split) {
           $('opp-note').textContent = `Sent ${s.count} ${unitName(s.unit, s.count)}`;
           const box = $('opp');
           box.classList.add('alert');
@@ -468,20 +513,25 @@ function updateHud(now) {
     setText('hud-phase', m ? `${m.text} ${fmtTime((m.tick - match.tick) * DT)}` : '');
   }
 
-  // The strip shows the lane that isn't on the board.
-  const shown = watching ? me : opp;
-  setText('opp-lives', String(shown.lane.lives));
-  setText('opp-income', String(shown.lane.payout()));
-  const strip = $('opp');
-  if (watching) {
-    const danger = now < dangerUntil || gateThreatened();
-    strip.classList.toggle('danger', danger);
-    setText('opp-note', danger ? 'Enemies near your gate' : '');
+  if (split) {
+    setText('tag-opp-lives', String(opp.lane.lives));
+    setText('tag-opp-income', String(opp.lane.payout()));
   } else {
-    let units = 0;
-    for (const e of opp.lane.enemies) if (e.alive && e.sentBy === ME) units++;
-    for (const q of opp.lane.queue) if (q.sentBy === ME) units++;
-    if (!strip.classList.contains('alert')) setText('opp-note', units ? `Yours: ${units}` : '');
+    // The strip shows the lane that isn't on the board.
+    const shown = watching ? me : opp;
+    setText('opp-lives', String(shown.lane.lives));
+    setText('opp-income', String(shown.lane.payout()));
+    const strip = $('opp');
+    if (watching) {
+      const danger = now < dangerUntil || gateThreatened();
+      strip.classList.toggle('danger', danger);
+      setText('opp-note', danger ? 'Enemies near your gate' : '');
+    } else {
+      let units = 0;
+      for (const e of opp.lane.enemies) if (e.alive && e.sentBy === ME) units++;
+      for (const q of opp.lane.queue) if (q.sentBy === ME) units++;
+      if (!strip.classList.contains('alert')) setText('opp-note', units ? `Yours: ${units}` : '');
+    }
   }
 
   const nw = match.nextWave();
@@ -556,7 +606,9 @@ function doSend(id, btn) {
     if (!coached.watch && !watching) {
       coached.watch = true;
       store.set('sl.coached', coached);
-      toast(`Your ${unitName(s.unit, s.count)} are marching down the bot's road. Follow them in the strip at the top, or tap it to watch the bot's lane.`, '', 7000);
+      toast(split
+        ? `Your ${unitName(s.unit, s.count)} are marching down the bot's road on the right.`
+        : `Your ${unitName(s.unit, s.count)} are marching down the bot's road. Turn your phone sideways to see both lanes, or tap the strip at the top.`, '', 7000);
     }
     return;
   }
@@ -619,8 +671,10 @@ function closePops() {
 function placePop(pop, c, r) {
   const wrap = $('board-wrap');
   const cs = renderer.cs;
-  const cx = canvas.offsetLeft + renderer.sx(c + 0.5);
-  const cy = canvas.offsetTop + renderer.sy(r + 0.5);
+  const cr = canvas.getBoundingClientRect();
+  const wr = wrap.getBoundingClientRect();
+  const cx = cr.left - wr.left + renderer.sx(c + 0.5);
+  const cy = cr.top - wr.top + renderer.sy(r + 0.5);
   pop.style.left = '0px';
   pop.style.top = '0px';
   const w = pop.offsetWidth;
@@ -772,8 +826,15 @@ function layout() {
   const cs = getComputedStyle(wrap);
   const w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const h = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-  renderer.layout(w, h);
-  track.resize();
+  if (split) {
+    const each = (w - 10) / 2;
+    renderer.layout(each, h);
+    rendererOpp.layout(each, h);
+  } else {
+    renderer.layout(w, h);
+    rendererOpp.layout(w, h);
+    track.resize();
+  }
   if (sel) placePop(sel.kind === 'build' ? $('build-pop') : $('tower-pop'), sel.c, sel.r);
 }
 window.addEventListener('resize', () => { if (running) layout(); });
@@ -857,7 +918,7 @@ function showEnd() {
   }
   $('end').hidden = false;
   sfx.play(won ? 'win' : 'lose');
-  $('btn-again').focus();
+  $('btn-again').focus({ preventScroll: true });
 }
 
 // ---------- device helpers ----------
@@ -876,9 +937,8 @@ function goFullscreen() {
   if (!matchMedia('(pointer: coarse)').matches) return;
   const el = document.documentElement;
   if (document.fullscreenElement || !el.requestFullscreen) return;
-  el.requestFullscreen({ navigationUI: 'hide' })
-    .then(() => { try { screen.orientation.lock('portrait').catch(() => {}); } catch { /* no lock */ } })
-    .catch(() => {});
+  // No orientation lock: turning the phone switches between one lane and both lanes.
+  el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
 }
 document.addEventListener('fullscreenchange', () => { if (running) setTimeout(layout, 50); });
 
@@ -888,4 +948,4 @@ initMenu();
 show('menu');
 
 // Handle for automated checks in a browser; does nothing on its own.
-window.__sl = { get match() { return match; }, renderer, get watching() { return watching; } };
+window.__sl = { get match() { return match; }, renderer, rendererOpp, get watching() { return watching; }, get split() { return split; } };

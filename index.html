@@ -38,7 +38,8 @@
   <main class="wrap menu-main">
     <section class="panel stack" aria-labelledby="practice-title">
       <h2 id="practice-title" class="panel-title">Practice against a bot</h2>
-      <p class="hint">You and the bot each defend your own road. Spend gold to send enemies down the bot's road, and every send also raises your income. Follow your attackers in the strip at the top of the screen. Last castle standing wins.</p>
+      <p class="hint">You and the bot each defend your own road. Spend gold to send enemies down the bot's road, and every send also raises your income. Last castle standing wins.</p>
+      <p class="hint">Turn your phone sideways during a match to see both lanes side by side.</p>
       <fieldset class="seg">
         <legend>Bot</legend>
         <div class="seg-row" id="seg-difficulty">
@@ -101,7 +102,22 @@
   </button>
 
   <div class="board-wrap" id="board-wrap">
-    <canvas id="board" aria-label="Your lane. Tap a stone plot to build, or a tower to upgrade it."></canvas>
+    <div class="lanebox mine" id="lane-mine">
+      <div class="lanetag">
+        <svg class="shield" id="tag-me-shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
+        <span>Your lane</span>
+      </div>
+      <canvas id="board" aria-label="Your lane. Tap a stone plot to build, or a tower to upgrade it."></canvas>
+    </div>
+    <div class="lanebox theirs" id="lane-theirs">
+      <div class="lanetag" id="tag-opp">
+        <svg class="shield" id="tag-opp-shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
+        <span id="tag-opp-name">Bot</span>
+        <span class="tag-stat"><svg class="i" aria-hidden="true"><use href="#i-castle"/></svg><b id="tag-opp-lives">20</b></span>
+        <span class="tag-inc">+<b id="tag-opp-income">20</b></span>
+      </div>
+      <canvas id="board-opp" aria-label="Your opponent's lane"></canvas>
+    </div>
 
     <button class="watching" id="watching" type="button" hidden>
       <svg class="shield" id="watching-shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
@@ -177,7 +193,8 @@
       <div class="levels" id="legend-levels"></div>
       <h3>Attack</h3>
       <p>The bar at the bottom sends enemies down your opponent's road. Each send costs gold now and raises your income for the rest of the match. Income pays out every few seconds; the ring next to it shows when.</p>
-      <p>Your enemies carry your banner. The strip at the top shows your opponent's road as a line from the forest to their castle, with your units on it, so you can watch them get through or fall. Tap the strip to watch their whole lane; tap Back to return to yours.</p>
+      <p>Your enemies carry your banner. Turn your phone sideways to see your lane and your opponent's lane side by side, and watch your units march into their defences.</p>
+      <p>Holding the phone upright gives your own lane more room. The strip at the top then shows your opponent's road as a line from the forest to their castle, with your units on it. Tap the strip to look at their whole lane, and tap again to come back.</p>
       <h3>Know your enemy</h3>
       <ul class="legend" id="legend-enemies"></ul>
       <h3>Waves and sudden death</h3>

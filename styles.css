@@ -300,22 +300,53 @@ button { font: inherit; color: inherit; }
 }
 /* While watching, messages drop below the banner instead of covering it. */
 .game.is-watching .toasts { top: 64px; }
-.game.is-watching #board { box-shadow: 0 0 0 2px var(--brass), 0 6px 20px rgba(0, 0, 0, 0.35); }
+.game.is-watching:not(.split) #board-opp { box-shadow: 0 0 0 2px var(--brass), 0 6px 20px rgba(0, 0, 0, 0.35); }
 
 .board-wrap {
   position: relative;
   min-height: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   padding: 0 var(--gutter-r) 0 var(--gutter-l);
   overflow: hidden;
 }
-#board {
+.lanebox { position: relative; flex: none; }
+#board, #board-opp {
   display: block;
   border-radius: 8px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
   touch-action: none;
 }
+.lanetag {
+  position: absolute;
+  z-index: 3;
+  top: 5px;
+  left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 12px);
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(21, 26, 34, 0.86);
+  color: var(--parchment);
+  font: 700 0.8125rem/1.1 var(--f-body);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.lanetag .shield { width: 12px; height: 15px; flex: none; }
+.tag-stat { display: inline-flex; align-items: center; gap: 3px; font: 600 0.8125rem/1 var(--f-mono); font-variant-numeric: tabular-nums; }
+.tag-stat .i { width: 13px; height: 13px; }
+.tag-inc { font: 600 0.75rem/1 var(--f-mono); color: var(--ash); }
+.lanetag.hurt { background: rgba(120, 30, 28, 0.92); }
+
+/* Upright: one board at a time; "watching" swaps to the opponent's board. */
+.game:not(.split) .lanetag { display: none; }
+.game:not(.split) .lanebox.theirs { display: none; }
+.game:not(.split).is-watching .lanebox.mine { display: none; }
+.game:not(.split).is-watching .lanebox.theirs { display: block; }
 
 .nextwave {
   margin: 6px var(--gutter-r) 0 var(--gutter-l);
@@ -524,3 +555,65 @@ button { font: inherit; color: inherit; }
 
 .up-preview { display: inline-flex; align-items: center; gap: 6px; }
 .up-preview img { width: 26px; height: 26px; flex: none; }
+
+/* ---------- sideways: both lanes side by side ----------
+   Stats on the left, the two lanes in the middle, send buttons on the right. */
+.game.split {
+  grid-template-columns: minmax(96px, 136px) minmax(0, 1fr) minmax(80px, 100px);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "hud boards sends" "wave boards sends";
+  justify-content: stretch;
+  column-gap: 8px;
+  padding: max(6px, env(safe-area-inset-top, 0px)) max(6px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px));
+}
+.game.split .opp, .game.split .watching { display: none !important; }
+.game.split .hud {
+  grid-area: hud;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 0;
+  padding: 6px 0 4px 4px;
+}
+.game.split .hud-clock { margin-left: 0; justify-items: start; }
+.game.split .hud-clock small { white-space: normal; max-width: none; }
+.game.split .board-wrap { grid-area: boards; padding: 0; }
+.game.split .nextwave {
+  grid-area: wave;
+  align-self: end;
+  margin: 0 0 4px 4px;
+  white-space: normal;
+  text-align: left;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+.game.split .sendbar {
+  grid-area: sends;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  padding: 0;
+  gap: 6px;
+}
+.game.split .send { min-height: 0; padding: 3px 2px; }
+.game.split .send img { width: 24px; height: 24px; }
+.game.split .toasts { top: 36px; }
+
+/* Short, wide screens (phone sideways): result on the left, numbers on the right. */
+@media (orientation: landscape) and (max-height: 540px) {
+  #end .sheet {
+    width: min(46rem, 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "eyebrow stats" "title stats" "sub stats" "again stats" "menu stats";
+    grid-template-rows: auto auto auto auto 1fr;
+    column-gap: 18px;
+    row-gap: 10px;
+    align-items: start;
+  }
+  #end-eyebrow { grid-area: eyebrow; }
+  #end-title { grid-area: title; font-size: 2.6rem; }
+  #end-sub { grid-area: sub; }
+  #end-stats { grid-area: stats; align-self: center; margin: 0; }
+  #btn-again { grid-area: again; }
+  #btn-menu { grid-area: menu; }
+}

@@ -26,8 +26,10 @@ The phone-to-phone connection test lives at [`/nettest/`](https://dhaneshbabu.gi
   Ballista (long range, targets the toughest enemy, ignores armour). Each has 3 levels with
   their own look: wooden post, stone tower, keep. Selling within 4 seconds of building
   refunds everything.
-- The strip under the HUD shows the opponent's road as a line with your units on it; tap it
-  to watch their whole lane.
+- Turn the phone sideways to see both lanes side by side (stats on the left, send buttons on
+  the right). Upright shows your lane bigger; the strip under the HUD then shows the
+  opponent's road as a line with your units on it, and tapping it shows their whole lane.
+  Rotating switches layouts mid-match.
 - Sends: Goblins, Scouts, Shieldbearers, Ogre (unlocks later), Siege Giant (unlocks late).
 - Background waves hit every player at the same moment and toughen over time. Sudden death
   doubles the cost of leaks and speeds up the toughening.
