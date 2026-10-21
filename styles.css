@@ -261,8 +261,9 @@ button { font: inherit; color: inherit; }
 .track { display: block; width: 100%; height: 24px; }
 
 .watching {
+  appearance: none;
   position: absolute;
-  z-index: 4;
+  z-index: 7;
   top: 8px;
   left: 50%;
   transform: translateX(-50%);
@@ -270,18 +271,35 @@ button { font: inherit; color: inherit; }
   align-items: center;
   gap: 8px;
   max-width: calc(100% - 24px);
-  padding: 5px 5px 5px 10px;
+  min-height: 46px;
+  padding: 5px 5px 5px 12px;
   border: 1px solid var(--brass);
   border-radius: 12px;
-  background: rgba(21, 26, 34, 0.92);
+  background: rgba(21, 26, 34, 0.94);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-  font-weight: 700;
-  font-size: 0.9375rem;
+  color: var(--parchment);
+  font: 700 0.9375rem/1.1 var(--f-body);
   white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
 }
+.watching:active { background: rgba(40, 48, 60, 0.96); }
+.watching:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .watching .shield { width: 14px; height: 17px; flex: none; }
-.watching span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.watching .btn { width: auto; min-height: 36px; padding: 0 10px; font-size: 0.875rem; }
+.watching-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.watching-back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: var(--brass);
+  color: var(--brass-ink);
+  font-size: 0.875rem;
+}
+/* While watching, messages drop below the banner instead of covering it. */
+.game.is-watching .toasts { top: 64px; }
 .game.is-watching #board { box-shadow: 0 0 0 2px var(--brass), 0 6px 20px rgba(0, 0, 0, 0.35); }
 
 .board-wrap {

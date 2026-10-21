@@ -303,7 +303,7 @@ $('opp').addEventListener('click', () => {
   setWatching(!watching);
   if (watching && !coached.watch) { coached.watch = true; store.set('sl.coached', coached); }
 });
-$('btn-back').addEventListener('click', () => setWatching(false));
+$('watching').addEventListener('click', () => setWatching(false));
 
 /** True when something on the player's own road is getting close to their gate. */
 function gateThreatened() {

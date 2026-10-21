@@ -103,11 +103,11 @@
   <div class="board-wrap" id="board-wrap">
     <canvas id="board" aria-label="Your lane. Tap a stone plot to build, or a tower to upgrade it."></canvas>
 
-    <div class="watching" id="watching" hidden>
+    <button class="watching" id="watching" type="button" hidden>
       <svg class="shield" id="watching-shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
-      <span id="watching-name">Bot's lane</span>
-      <button class="btn sm" id="btn-back" type="button">Back to your lane</button>
-    </div>
+      <span class="watching-name" id="watching-name">Bot's lane</span>
+      <span class="watching-back">Back to your lane</span>
+    </button>
 
     <div class="pop" id="build-pop" hidden>
       <p class="pop-title">Build</p>
