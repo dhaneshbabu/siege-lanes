@@ -15,6 +15,14 @@ It runs entirely as static files, so GitHub Pages hosts it:
 - Stage 3: 2v2 with four phones.
 - Stage 4: balance and polish.
 
+## More games in this repo
+
+- **Castle Conquest** ([`/conquest/`](https://dhaneshbabu.github.io/siege-lanes/conquest/)):
+  real-time strategy. Holdings train soldiers; drag from yours to send them, take villages,
+  towns and castles. 1 v 1, 2 v 2, or 3–4 player free-for-all against bots. Matches last
+  4 minutes; if time runs out, the most land wins. `node conquest/tools/balance.mjs` runs
+  bot-vs-bot matches.
+
 The phone-to-phone connection test lives at [`/nettest/`](https://dhaneshbabu.github.io/siege-lanes/nettest/).
 
 ## Rules in brief
