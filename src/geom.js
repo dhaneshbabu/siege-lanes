@@ -1,5 +1,5 @@
 // Lane geometry: the road as a polyline, which cells it covers, and how much road a spot can see.
-import { COLS, ROWS, PATH } from './config.js';
+import { COLS, ROWS, PATH, PLOTS } from './config.js';
 
 const segs = [];
 let total = 0;
@@ -42,9 +42,27 @@ export const inGrid = (c, r) => c >= 0 && c < COLS && r >= 0 && r < ROWS;
 export const cellIndex = (c, r) => r * COLS + c;
 export const isPath = (c, r) => pathCells[r * COLS + c] === 1;
 
-/** Cells a tower can stand on. */
-export const BUILD_CELLS = [];
-for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!isPath(c, r)) BUILD_CELLS.push([c, r]);
+const plotCells = new Uint8Array(COLS * ROWS);
+for (const [c, r] of PLOTS) {
+  if (!inGrid(c, r) || isPath(c, r)) throw new Error(`Bad plot ${c},${r}`);
+  plotCells[r * COLS + c] = 1;
+}
+/** Cells a tower can stand on: the stone plots. */
+export const BUILD_CELLS = PLOTS.map(([c, r]) => [c, r]);
+export const isPlot = (c, r) => inGrid(c, r) && plotCells[r * COLS + c] === 1;
+
+/** The plot nearest a point (in cells), if one is within maxDist of its centre. */
+export function nearestPlot(x, y, maxDist = 0.75) {
+  let best = null;
+  let bestD = maxDist * maxDist;
+  for (const [c, r] of PLOTS) {
+    const dx = c + 0.5 - x;
+    const dy = r + 0.5 - y;
+    const d = dx * dx + dy * dy;
+    if (d <= bestD) { bestD = d; best = { c, r }; }
+  }
+  return best;
+}
 
 // Road sample points inside the board, every 0.2 cells, for coverage estimates.
 const STEP = 0.2;

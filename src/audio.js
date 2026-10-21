@@ -116,6 +116,15 @@ export class Sfx {
         case 'bell':
           this.bell();
           break;
+        case 'page':
+          this.burst({ dur: 0.12, vol: 0.12, freq: 1800, type: 'bandpass', q: 0.8 });
+          break;
+        case 'hit':
+          if (!this.throttle('hit', 300)) return;
+          this.tone(392, { dur: 0.16, vol: 0.18, type: 'triangle' });
+          this.tone(587, { dur: 0.28, vol: 0.18, type: 'triangle', at: 0.09 });
+          this.burst({ dur: 0.15, vol: 0.2, freq: 200, at: 0.02 });
+          break;
         case 'denied':
           this.tone(196, { dur: 0.1, vol: 0.12, type: 'square' });
           break;

@@ -1,10 +1,11 @@
 // Game rules and balance data. Everything tunable lives here.
 //
 // Time comes in two flavours:
-//  - real seconds: what the players' clocks show; enemy speed and tower fire rates use these.
-//  - battle seconds: the match's pacing clock. Battle seconds = real seconds x mode pace.
-//    Short mode runs the battle clock 1.5x faster, so waves, income, unlocks and
-//    sudden death all arrive sooner while combat itself moves at the same speed.
+//  - real seconds: what the players' clocks show. Combat (enemy speed, fire rates) and the
+//    wave rhythm (a wave every CLOCK.waveEvery seconds) use these.
+//  - battle seconds: the match's growth clock. Battle seconds = real seconds x mode pace.
+//    Wave toughness, income, unlocks and sudden death follow it, so a faster pace gives a
+//    shorter match with the same balance: income rises as fast as the waves toughen.
 
 export const COLS = 9;
 export const ROWS = 12;
@@ -18,11 +19,21 @@ export const PATH = [
   [1.5, 7.5], [7.5, 7.5], [7.5, 10.5], [4.5, 10.5], [4.5, 12.7],
 ];
 
+// Stone plots where towers can be built (column, row). Hand-placed along the road's bends;
+// no two are side by side, so every tower has room to grow when upgraded.
+export const PLOTS = [
+  [3, 0], [6, 0],
+  [1, 2], [3, 2], [5, 2], [2, 3], [4, 3], [6, 3], [8, 2],
+  [3, 5], [5, 5], [7, 5], [2, 6], [4, 6], [6, 6], [0, 6],
+  [2, 8], [4, 8], [6, 8], [3, 9], [5, 9], [8, 9],
+  [3, 11], [5, 11],
+];
+
 export const START_LIVES = 20;
 
 export const ECON = {
-  startGold: 140,
-  baseIncome: 20,        // gold per payout before any sends
+  startGold: 160,
+  baseIncome: 24,        // gold per payout before any sends
   incomeEvery: 10,       // battle seconds between payouts
   sellRefund: 0.7,       // share of spent gold returned on sell
   undoSeconds: 4,        // full refund if an unupgraded tower is sold this soon after building
@@ -39,10 +50,10 @@ export const ENEMIES = {
 };
 export const ENEMY_ORDER = ['goblin', 'scout', 'shield', 'ogre', 'giant'];
 
-// Real seconds between units of one group entering the lane.
 // From sudden death on, leaks cost double and wave toughness compounds a little more each minute.
 export const SUDDEN_DEATH = { livesMul: 2, hpGrowthPerMin: 0.12 };
 
+// Real seconds between units of one group entering the lane.
 export const SPAWN_GAP = { goblin: 0.42, scout: 0.5, shield: 0.7, ogre: 1.2, giant: 2.5 };
 
 export const TOWERS = {
@@ -98,15 +109,14 @@ export const SEND_BY_ID = Object.fromEntries(SENDS.map((s) => [s.id, s]));
 export const SEND_DELAY = 1.0; // real seconds before sent units enter the target lane
 
 export const MODES = {
-  short: { id: 'short', label: 'Short', about: 'About 7 minutes', pace: 1.5 },
-  standard: { id: 'standard', label: 'Standard', about: 'About 12 minutes', pace: 1.0 },
+  short: { id: 'short', label: 'Short', about: '4–6 min', pace: 2.5 },
+  standard: { id: 'standard', label: 'Standard', about: '6–9 min', pace: 1.5 },
 };
 
-// Battle-clock milestones.
 export const CLOCK = {
-  firstWave: 8,
-  waveEvery: 15,
-  suddenDeath: 540, // leaks cost double from here, and waves toughen faster
+  firstWave: 6, // real seconds
+  waveEvery: 12, // real seconds
+  suddenDeath: 540, // battle seconds; leaks cost double from here, and waves toughen faster
 };
 
 // Background waves every player faces at the same moment. The pattern repeats, growing each lap.
@@ -131,13 +141,13 @@ export function waveHpMul(bt) {
   if (sdMin > 0) mul *= Math.pow(1 + SUDDEN_DEATH.hpGrowthPerMin, sdMin);
   return mul;
 }
-/** Unit-count multiplier for wave number n (1-based): grows each lap of the pattern. */
-export function waveCountMul(n) {
-  return 1 + 0.15 * Math.floor((n - 1) / WAVE_PATTERN.length);
+/** Unit-count multiplier for waves at a battle time: steps up every 150 battle seconds. */
+export function waveCountMul(bt) {
+  return 1 + 0.15 * Math.floor(bt / 150);
 }
-/** Sent units grow tougher over the match too, but more slowly than the waves. */
+/** Sent units grow tougher over the match like the waves do, so late sends stay dangerous. */
 export function sentHpMul(bt) {
-  return 1 + 0.5 * (waveHpMul(bt) - 1);
+  return 1 + 0.85 * (waveHpMul(bt) - 1);
 }
 
 export const DIFFICULTIES = {

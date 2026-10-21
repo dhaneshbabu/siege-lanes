@@ -38,7 +38,7 @@
   <main class="wrap menu-main">
     <section class="panel stack" aria-labelledby="practice-title">
       <h2 id="practice-title" class="panel-title">Practice against a bot</h2>
-      <p class="hint">Hold your road while the bot holds its own. Send enemies down its road; every send also raises your income. Last castle standing wins.</p>
+      <p class="hint">You and the bot each defend your own road. Spend gold to send enemies down the bot's road, and every send also raises your income. Follow your attackers in the strip at the top of the screen. Last castle standing wins.</p>
       <fieldset class="seg">
         <legend>Bot</legend>
         <div class="seg-row" id="seg-difficulty">
@@ -50,8 +50,8 @@
       <fieldset class="seg">
         <legend>Match length</legend>
         <div class="seg-row two" id="seg-length">
-          <label><input type="radio" name="length" value="short" id="len-short"><span>Short<small>About 7 min</small></span></label>
-          <label><input type="radio" name="length" value="standard" id="len-standard"><span>Standard<small>About 12 min</small></span></label>
+          <label><input type="radio" name="length" value="short" id="len-short"><span>Short<small id="len-short-about"></small></span></label>
+          <label><input type="radio" name="length" value="standard" id="len-standard"><span>Standard<small id="len-standard-about"></small></span></label>
         </div>
       </fieldset>
       <button class="btn primary" id="btn-start" type="button">Start practice</button>
@@ -88,16 +88,26 @@
     <button class="icon-btn" id="btn-pause" type="button" aria-label="Pause"><svg aria-hidden="true"><use href="#i-pause"/></svg></button>
   </header>
 
-  <div class="opp" id="opp">
-    <svg class="shield" id="opp-shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
-    <span class="opp-name" id="opp-name">Bot</span>
-    <span class="opp-stat"><svg class="i" aria-hidden="true"><use href="#i-castle"/></svg><b id="opp-lives">20</b></span>
-    <span class="opp-stat income-mini">+<b id="opp-income">20</b></span>
-    <span class="opp-note" id="opp-note"></span>
-  </div>
+  <button class="opp" id="opp" type="button">
+    <span class="opp-row">
+      <svg class="shield" id="opp-shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
+      <span class="opp-name" id="opp-name">Bot</span>
+      <span class="opp-stat"><svg class="i" aria-hidden="true"><use href="#i-castle"/></svg><b id="opp-lives">20</b></span>
+      <span class="opp-stat income-mini">+<b id="opp-income">20</b></span>
+      <span class="opp-note" id="opp-note"></span>
+      <span class="opp-watch" id="opp-watch">Watch</span>
+    </span>
+    <canvas class="track" id="track" aria-hidden="true"></canvas>
+  </button>
 
   <div class="board-wrap" id="board-wrap">
-    <canvas id="board" aria-label="Your lane. Tap an empty square to build, or a tower to upgrade it."></canvas>
+    <canvas id="board" aria-label="Your lane. Tap a stone plot to build, or a tower to upgrade it."></canvas>
+
+    <div class="watching" id="watching" hidden>
+      <svg class="shield" id="watching-shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
+      <span id="watching-name">Bot's lane</span>
+      <button class="btn sm" id="btn-back" type="button">Back to your lane</button>
+    </div>
 
     <div class="pop" id="build-pop" hidden>
       <p class="pop-title">Build</p>
@@ -161,14 +171,17 @@
       <h3>The goal</h3>
       <p>Enemies march down the road towards your castle gate. Each one that gets through costs lives (Ogres 2, Siege Giants 5). Lose all 20 and your castle falls. Outlast your opponent.</p>
       <h3>Build</h3>
-      <p>Tap an empty square to build. Tap a tower to upgrade or sell it. Selling within 4 seconds of building gives all the gold back.</p>
+      <p>Towers stand on the stone plots beside the road. Plots light up gold when you can afford a tower; tap one to build. Tap a tower to upgrade or sell it. Selling within 4 seconds of building gives all the gold back.</p>
       <ul class="legend" id="legend-towers"></ul>
+      <p>Each tower has three levels, and you can tell them apart on the board:</p>
+      <div class="levels" id="legend-levels"></div>
       <h3>Attack</h3>
       <p>The bar at the bottom sends enemies down your opponent's road. Each send costs gold now and raises your income for the rest of the match. Income pays out every few seconds; the ring next to it shows when.</p>
+      <p>Your enemies carry your banner. The strip at the top shows your opponent's road as a line from the forest to their castle, with your units on it, so you can watch them get through or fall. Tap the strip to watch their whole lane; tap Back to return to yours.</p>
       <h3>Know your enemy</h3>
       <ul class="legend" id="legend-enemies"></ul>
       <h3>Waves and sudden death</h3>
-      <p>Both players face the same waves at the same moments, and they get tougher over time. Ogres can be sent after a short while and Siege Giants later on. Late in the match sudden death begins: every leak costs double and the waves toughen faster.</p>
+      <p>Both players face the same waves at the same moments, and they get tougher over time. Ogres can be sent after a short while and Siege Giants later on. Late in the match sudden death begins: every leak costs double and the waves toughen faster, so someone falls soon after.</p>
     </div>
     <button class="btn primary" id="btn-howto-close" type="button">Got it</button>
   </div>

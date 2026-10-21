@@ -1,8 +1,8 @@
 // App shell: menus, the match loop, input, HUD and sound. Practice mode: you against a bot.
 import { DT, ROWS, TOWERS, TOWER_ORDER, ENEMIES, ENEMY_ORDER, SENDS, SEND_BY_ID, MODES, DIFFICULTIES, TINCTURES } from './config.js';
 import { Match } from './match.js';
-import { Renderer, thumbnail } from './render.js';
-import { inGrid } from './geom.js';
+import { Renderer, TrackView, thumbnail } from './render.js';
+import { nearestPlot, PATH_LEN } from './geom.js';
 import { Sfx } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -20,13 +20,15 @@ const store = {
 
 const ME = 'you';
 const BOT = 'bot';
+const MY_COLOR = 1; // azure
+const BOT_COLOR = 0; // gules
 const settings = {
   difficulty: DIFFICULTIES[store.get('sl.difficulty', 'normal')] ? store.get('sl.difficulty', 'normal') : 'normal',
   length: MODES[store.get('sl.length', 'standard')] ? store.get('sl.length', 'standard') : 'standard',
   sound: store.get('sl.sound', true) !== false,
 };
 const record = store.get('sl.record', {});
-const coached = store.get('sl.coached', { built: false, sent: false });
+const coached = Object.assign({ built: false, sent: false, watch: false }, store.get('sl.coached', {}));
 
 const sfx = new Sfx();
 sfx.on = settings.sound;
@@ -44,6 +46,10 @@ let sel = null; // { c, r, kind: 'build' | 'tower' }
 let endShown = false;
 let wakeLock = null;
 let firstBuildAt = null;
+let watching = false; // true: the board shows the opponent's lane
+let dangerUntil = 0;
+let plotHintShown = false;
+const throughBuffer = { lives: 0, units: {}, timer: 0 };
 
 const canvas = $('board');
 const renderer = new Renderer(canvas, {
@@ -52,7 +58,11 @@ const renderer = new Renderer(canvas, {
     return p ? TINCTURES[p.color].color : TINCTURES[0].color;
   },
 });
-renderer.reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const track = new TrackView($('track'));
+const colorOfPlayer = (id) => {
+  const p = match && match.byId.get(id);
+  return p ? TINCTURES[p.color].color : '#888';
+};
 
 // ---------- formatting ----------
 const fmtTime = (sec) => {
@@ -61,10 +71,11 @@ const fmtTime = (sec) => {
 };
 const unitName = (kind, count) => (count === 1 ? ENEMIES[kind].name : ENEMIES[kind].plural);
 const compText = (comp) => comp.map(({ kind, count }) => `${count} ${unitName(kind, count)}`).join(', ');
+const LEVEL_NAMES = ['Wooden post', 'Stone tower', 'Keep'];
 
 // ---------- thumbnails ----------
 const thumbs = { tower: {}, enemy: {} };
-for (const t of TOWER_ORDER) thumbs.tower[t] = thumbnail(t, 'tower', 48);
+for (const t of TOWER_ORDER) thumbs.tower[t] = [0, 1, 2].map((lv) => thumbnail(t, 'tower', 48, lv, TINCTURES[MY_COLOR].color));
 for (const k of ENEMY_ORDER) thumbs.enemy[k] = thumbnail(k, 'enemy', 48);
 
 // ---------- toasts ----------
@@ -100,6 +111,8 @@ function flashStat(id, cls) {
 function initMenu() {
   $(`diff-${settings.difficulty}`).checked = true;
   $(`len-${settings.length}`).checked = true;
+  $('len-short-about').textContent = MODES.short.about;
+  $('len-standard-about').textContent = MODES.standard.about;
   for (const el of document.querySelectorAll('input[name="difficulty"]')) {
     el.addEventListener('change', () => {
       settings.difficulty = el.value;
@@ -149,28 +162,41 @@ const ENEMY_TIPS = {
 function fillLegend() {
   const tl = $('legend-towers');
   const el = $('legend-enemies');
+  const lv = $('legend-levels');
   tl.textContent = '';
   el.textContent = '';
+  lv.textContent = '';
   for (const t of TOWER_ORDER) {
     const li = document.createElement('li');
-    li.innerHTML = `<img alt="" src="${thumbs.tower[t]}"><span><b></b> · <span class="c"></span></span>`;
+    li.innerHTML = '<img alt=""><span><b></b> · <span class="c"></span></span>';
+    li.querySelector('img').src = thumbs.tower[t][0];
     li.querySelector('b').textContent = `${TOWERS[t].name} (${TOWERS[t].levels[0].cost} gold)`;
     li.querySelector('.c').textContent = TOWER_TIPS[t];
     tl.appendChild(li);
   }
   for (const k of ENEMY_ORDER) {
     const li = document.createElement('li');
-    li.innerHTML = `<img alt="" src="${thumbs.enemy[k]}"><span><b></b> · <span class="c"></span></span>`;
+    li.innerHTML = '<img alt=""><span><b></b> · <span class="c"></span></span>';
+    li.querySelector('img').src = thumbs.enemy[k];
     li.querySelector('b').textContent = ENEMIES[k].plural;
     li.querySelector('.c').textContent = ENEMY_TIPS[k];
     el.appendChild(li);
+  }
+  for (let i = 0; i < 3; i++) {
+    const fig = document.createElement('figure');
+    fig.innerHTML = '<img alt=""><figcaption><b></b><span></span></figcaption>';
+    fig.querySelector('img').src = thumbs.tower.archer[i];
+    fig.querySelector('b').textContent = `Level ${i + 1}`;
+    fig.querySelector('span').textContent = LEVEL_NAMES[i];
+    lv.appendChild(fig);
   }
 }
 let howtoResume = false;
 function openHowto() {
   howtoResume = false;
   $('howto').hidden = false;
-  $('btn-howto-close').focus();
+  $('howto').querySelector('.howto').scrollTop = 0;
+  $('btn-howto-close').focus({ preventScroll: true });
 }
 $('btn-howto-close').addEventListener('click', () => {
   $('howto').hidden = true;
@@ -183,14 +209,14 @@ function startMatch() {
   const diff = DIFFICULTIES[settings.difficulty];
   match = new Match({
     mode: settings.length,
+    emitAll: true,
     players: [
-      { id: ME, name: 'You', kind: 'human', color: 1, team: 0 },
-      { id: BOT, name: `${diff.label} bot`, kind: 'bot', difficulty: settings.difficulty, color: 0, team: 1 },
+      { id: ME, name: 'You', kind: 'human', color: MY_COLOR, team: 0 },
+      { id: BOT, name: `${diff.label} bot`, kind: 'bot', difficulty: settings.difficulty, color: BOT_COLOR, team: 1 },
     ],
   });
   me = match.byId.get(ME);
   opp = match.byId.get(BOT);
-  renderer.bannerColor = TINCTURES[me.color].color;
   renderer.fx.length = 0;
   renderer.selection = null;
   paused = false;
@@ -198,10 +224,12 @@ function startMatch() {
   acc = 0;
   endShown = false;
   firstBuildAt = null;
+  plotHintShown = false;
+  dangerUntil = 0;
   sel = null;
   closePops();
+  setWatching(false, true);
   $('toasts').textContent = '';
-  $('opp-name').textContent = opp.name;
   $('opp-note').textContent = '';
   $('end').hidden = true;
   $('pause').hidden = true;
@@ -217,7 +245,7 @@ function startMatch() {
   lastFrame = performance.now();
   cancelAnimationFrame(raf);
   raf = requestAnimationFrame(frame);
-  if (!coached.built) setTimeout(() => { if (running && !firstBuildAt) toast('Tap an empty square to build your first tower.', '', 5000); }, 600);
+  if (!coached.built) setTimeout(() => { if (running && !firstBuildAt) toast('Tap a glowing stone plot to build your first tower.', '', 5000); }, 600);
 }
 
 function goMenu() {
@@ -247,6 +275,44 @@ function resumeGame() {
   requestWakeLock();
 }
 
+// ---------- watching the opponent's lane ----------
+function setWatching(on, quiet = false) {
+  watching = on;
+  closePops();
+  renderer.fx.length = 0;
+  renderer.bannerColor = TINCTURES[(on ? opp : me).color].color;
+  $('game').classList.toggle('is-watching', on);
+  $('watching').hidden = !on;
+  if (on) {
+    $('watching-name').textContent = `${opp.name}'s lane`;
+    $('watching-shield').style.fill = TINCTURES[opp.color].color;
+  }
+  const strip = $('opp');
+  strip.setAttribute('aria-label', on ? 'Back to your lane' : `Watch ${opp.name}'s lane`);
+  $('opp-watch').textContent = on ? 'Back' : 'Watch';
+  $('opp-name').textContent = on ? 'Your road' : opp.name;
+  $('opp-shield').style.fill = TINCTURES[(on ? me : opp).color].color;
+  $('opp-note').textContent = '';
+  strip.classList.remove('danger', 'alert');
+  for (const k of ['opp-lives', 'opp-income']) delete cache[k];
+  if (!quiet) sfx.play('page');
+}
+$('opp').addEventListener('click', () => {
+  sfx.prime();
+  if (!match || match.over) return;
+  setWatching(!watching);
+  if (watching && !coached.watch) { coached.watch = true; store.set('sl.coached', coached); }
+});
+$('btn-back').addEventListener('click', () => setWatching(false));
+
+/** True when something on the player's own road is getting close to their gate. */
+function gateThreatened() {
+  for (const e of me.lane.enemies) {
+    if (e.alive && e.d > PATH_LEN * 0.62 && e.hp > e.maxHp * 0.3) return true;
+  }
+  return false;
+}
+
 // ---------- frame loop ----------
 function frame(now) {
   raf = requestAnimationFrame(frame);
@@ -263,27 +329,46 @@ function frame(now) {
     if (steps >= 12) acc = 0;
   }
   handleEvents(now);
-  renderer.draw(me.lane, paused || match.over ? 1 : Math.min(1, acc / DT), now);
-  updateHud();
+  const alpha = paused || match.over ? 1 : Math.min(1, acc / DT);
+  if (watching) renderer.draw(opp.lane, alpha, now, {});
+  else renderer.draw(me.lane, alpha, now, { gold: me.lane.gold, pulse: !firstBuildAt });
+  const shown = watching ? me : opp;
+  track.draw(shown.lane, { castleColor: TINCTURES[shown.color].color, colorOf: colorOfPlayer, highlight: ME }, alpha, now);
+  updateHud(now);
 }
 
 function handleEvents(now) {
-  const lane = me.lane;
-  if (lane.events.length) {
-    renderer.addEvents(lane.events, now);
-    for (const e of lane.events) {
-      if (e.t === 'leak') {
-        sfx.play('leak');
-        buzz(70);
-        flashStat('hud-lives-box', 'hurt');
-      } else if (e.t === 'fire' && e.kind === 'cannon') {
-        sfx.play('boom');
-      } else if (e.t === 'income') {
-        flashStat('hud-gold-box', 'flash');
+  const mine = me.lane;
+  const theirs = opp.lane;
+  renderer.addEvents((watching ? theirs : mine).events, now);
+  for (const e of mine.events) {
+    if (e.t === 'leak') {
+      sfx.play('leak');
+      buzz(70);
+      flashStat('hud-lives-box', 'hurt');
+      if (watching) {
+        track.hit(e.lost, now);
+        dangerUntil = now + 3000;
       }
+    } else if (!watching && e.t === 'fire' && e.kind === 'cannon') {
+      sfx.play('boom');
+    } else if (e.t === 'income') {
+      flashStat('hud-gold-box', 'flash');
     }
-    lane.events.length = 0;
   }
+  for (const e of theirs.events) {
+    if (e.t !== 'leak') continue;
+    if (!watching) track.hit(e.lost, now);
+    if (e.sentBy === ME) {
+      throughBuffer.lives += e.lost;
+      throughBuffer.units[e.kind] = (throughBuffer.units[e.kind] || 0) + 1;
+      clearTimeout(throughBuffer.timer);
+      throughBuffer.timer = setTimeout(flushThrough, 700);
+    }
+  }
+  mine.events.length = 0;
+  theirs.events.length = 0;
+
   for (const e of match.events) {
     switch (e.t) {
       case 'wave':
@@ -292,12 +377,13 @@ function handleEvents(now) {
       case 'send': {
         if (e.to !== ME) break;
         const s = SEND_BY_ID[e.sendId];
-        const note = `Sent ${s.count} ${unitName(s.unit, s.count)}`;
-        $('opp-note').textContent = note;
-        const box = $('opp');
-        box.classList.add('alert');
-        clearTimeout(box._t);
-        box._t = setTimeout(() => box.classList.remove('alert'), 1600);
+        if (!watching) {
+          $('opp-note').textContent = `Sent ${s.count} ${unitName(s.unit, s.count)}`;
+          const box = $('opp');
+          box.classList.add('alert');
+          clearTimeout(box._t);
+          box._t = setTimeout(() => box.classList.remove('alert'), 1600);
+        }
         sfx.play('incoming');
         if (s.id === 'giant' || s.id === 'ogre') toast(`${opp.name} sent ${s.count === 1 ? 'a' : s.count} ${unitName(s.unit, s.count)} your way`, 'warn');
         break;
@@ -322,11 +408,24 @@ function handleEvents(now) {
   match.events.length = 0;
 
   // Nudge towards sending once the player has a tower or two.
-  if (!coached.sent && firstBuildAt != null && match.realTime() - firstBuildAt > 20 && !me.lane.stats.sends) {
+  if (!coached.sent && firstBuildAt != null && match.realTime() - firstBuildAt > 15 && !me.lane.stats.sends) {
     coached.sent = true;
     store.set('sl.coached', coached);
-    toast('Tap a creature in the bar below to send it at the bot. Each send raises your income.', '', 6500);
+    toast('Tap a creature in the bar below to send it down the bot\'s road. Each send raises your income.', '', 6500);
   }
+}
+
+/** One toast for a burst of your units getting into the opponent's castle. */
+function flushThrough() {
+  if (!match || !throughBuffer.lives) return;
+  const kinds = Object.entries(throughBuffer.units);
+  const what = kinds.length === 1 && kinds[0][1] === 1
+    ? `Your ${ENEMIES[kinds[0][0]].name}`
+    : `${kinds.reduce((n, [, c]) => n + c, 0)} of your units`;
+  toast(`${what} got through: ${opp.name} −${throughBuffer.lives}`, 'good');
+  sfx.play('hit');
+  throughBuffer.lives = 0;
+  throughBuffer.units = {};
 }
 
 // ---------- HUD ----------
@@ -350,11 +449,11 @@ function nextMilestone() {
   return list[0] || null;
 }
 
-function updateHud() {
+function updateHud(now) {
   const lane = me.lane;
   setText('hud-lives', String(lane.lives));
-  setText('hud-gold', String(lane.gold));
-  setText('hud-income', `+${lane.income}`);
+  setText('hud-gold', String(Math.floor(lane.gold)));
+  setText('hud-income', `+${lane.payout()}`);
   const prog = 1 - Math.max(0, lane.nextIncome - lane.tick) / lane.incomeEvery;
   const off = (47.12 * (1 - prog)).toFixed(1);
   if (cache.ring !== off) { cache.ring = off; $('hud-ring').style.strokeDashoffset = off; }
@@ -368,8 +467,22 @@ function updateHud() {
     const m = nextMilestone();
     setText('hud-phase', m ? `${m.text} ${fmtTime((m.tick - match.tick) * DT)}` : '');
   }
-  setText('opp-lives', String(opp.lane.lives));
-  setText('opp-income', String(opp.lane.income));
+
+  // The strip shows the lane that isn't on the board.
+  const shown = watching ? me : opp;
+  setText('opp-lives', String(shown.lane.lives));
+  setText('opp-income', String(shown.lane.payout()));
+  const strip = $('opp');
+  if (watching) {
+    const danger = now < dangerUntil || gateThreatened();
+    strip.classList.toggle('danger', danger);
+    setText('opp-note', danger ? 'Enemies near your gate' : '');
+  } else {
+    let units = 0;
+    for (const e of opp.lane.enemies) if (e.alive && e.sentBy === ME) units++;
+    for (const q of opp.lane.queue) if (q.sentBy === ME) units++;
+    if (!strip.classList.contains('alert')) setText('opp-note', units ? `Yours: ${units}` : '');
+  }
 
   const nw = match.nextWave();
   const sec = Math.ceil(nw.inSec);
@@ -377,8 +490,9 @@ function updateHud() {
   setHtml('nextwave', `${lead}Wave ${nw.n} in <b>${sec}s</b>: ${escapeHtml(compText(nw.comp))}`);
 
   updateSendBar();
-  if (cache.popGold !== lane.gold) {
-    cache.popGold = lane.gold;
+  const g = Math.floor(lane.gold);
+  if (cache.popGold !== g) {
+    cache.popGold = g;
     refreshPops();
   }
 }
@@ -439,13 +553,18 @@ function doSend(id, btn) {
     void btn.offsetWidth;
     btn.classList.add('sent');
     if (!coached.sent) { coached.sent = true; store.set('sl.coached', coached); }
+    if (!coached.watch && !watching) {
+      coached.watch = true;
+      store.set('sl.coached', coached);
+      toast(`Your ${unitName(s.unit, s.count)} are marching down the bot's road. Follow them in the strip at the top, or tap it to watch the bot's lane.`, '', 7000);
+    }
     return;
   }
   btn.classList.remove('nope');
   void btn.offsetWidth;
   btn.classList.add('nope');
   sfx.play('denied');
-  if (r.reason === 'gold') toast(`${unitName(s.unit, s.count)} cost ${s.cost} gold. You need ${s.cost - me.lane.gold} more.`);
+  if (r.reason === 'gold') toast(`${unitName(s.unit, s.count)} cost ${s.cost} gold. You need ${Math.ceil(s.cost - me.lane.gold)} more.`);
   else if (r.reason === 'locked') toast(`${ENEMIES[s.unit].plural} can be sent in ${fmtTime(r.left)}.`);
 }
 
@@ -460,9 +579,10 @@ canvas.addEventListener('pointerup', (e) => {
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
   down = null;
   if (moved > 16 || !match || match.over) return;
+  if (watching) { setWatching(false); return; }
   const rect = canvas.getBoundingClientRect();
-  const { c, r } = renderer.cellAt(e.clientX - rect.left, e.clientY - rect.top);
-  onCell(c, r);
+  const { x, y } = renderer.boardAt(e.clientX - rect.left, e.clientY - rect.top);
+  onTap(x, y);
 });
 canvas.addEventListener('pointercancel', () => { down = null; });
 
@@ -472,21 +592,21 @@ document.addEventListener('pointerdown', (e) => {
   closePops();
 }, { capture: true });
 
-function onCell(c, r) {
+function onTap(x, y) {
   const lane = me.lane;
-  if (!inGrid(c, r)) { closePops(); return; }
-  const t = lane.towerAt(c, r);
-  if (t) {
-    if (sel && sel.kind === 'tower' && sel.c === c && sel.r === r) closePops();
-    else openTowerPop(c, r);
+  const plot = nearestPlot(x, y, 0.72);
+  if (!plot) {
+    closePops();
+    if (!plotHintShown) {
+      plotHintShown = true;
+      toast('Towers can only go on the stone plots.');
+    }
     return;
   }
-  if (lane.canBuild(c, r)) {
-    if (sel && sel.kind === 'build' && sel.c === c && sel.r === r) closePops();
-    else openBuildPop(c, r);
-    return;
-  }
-  closePops();
+  const { c, r } = plot;
+  if (sel && sel.c === c && sel.r === r) { closePops(); return; }
+  if (lane.towerAt(c, r)) openTowerPop(c, r);
+  else openBuildPop(c, r);
 }
 
 function closePops() {
@@ -523,7 +643,8 @@ function buildBuildGrid() {
     b.type = 'button';
     b.className = 'build-opt';
     b.id = `build-${t}`;
-    b.innerHTML = `<img alt="" src="${thumbs.tower[t]}"><span class="bo-text"><b></b><span class="bo-cost"><svg class="i" aria-hidden="true"><use href="#i-coin"/></svg>${TOWERS[t].levels[0].cost}</span></span>`;
+    b.innerHTML = `<img alt=""><span class="bo-text"><b></b><span class="bo-cost"><svg class="i" aria-hidden="true"><use href="#i-coin"/></svg>${TOWERS[t].levels[0].cost}</span></span>`;
+    b.querySelector('img').src = thumbs.tower[t][0];
     b.querySelector('b').textContent = TOWERS[t].short;
     b.setAttribute('aria-label', `Build ${TOWERS[t].name} for ${TOWERS[t].levels[0].cost} gold`);
     b.addEventListener('click', () => doBuild(t));
@@ -553,7 +674,7 @@ function doBuild(type) {
     if (!coached.built) { coached.built = true; store.set('sl.coached', coached); }
   } else if (res.reason === 'gold') {
     sfx.play('denied');
-    toast(`${TOWERS[type].name} costs ${TOWERS[type].levels[0].cost} gold. You need ${TOWERS[type].levels[0].cost - me.lane.gold} more.`);
+    toast(`${TOWERS[type].name} costs ${TOWERS[type].levels[0].cost} gold. You need ${Math.ceil(TOWERS[type].levels[0].cost - me.lane.gold)} more.`);
   }
 }
 
@@ -590,23 +711,31 @@ function refreshPops() {
   const t = lane.towerAt(sel.c, sel.r);
   if (!t) { closePops(); return; }
   const def = TOWERS[t.type];
-  $('tp-icon').src = thumbs.tower[t.type];
+  $('tp-icon').src = thumbs.tower[t.type][t.level];
   $('tp-name').textContent = def.name;
-  $('tp-level').textContent = `Level ${t.level + 1} of ${def.levels.length} · ${t.kills} kills`;
+  $('tp-level').textContent = `Level ${t.level + 1} of ${def.levels.length}: ${LEVEL_NAMES[t.level]} · ${t.kills} kills`;
   $('tp-stats').textContent = towerStats(t.type, t.level);
   const cost = lane.upgradeCost(t);
   const up = $('tp-upgrade');
+  up.textContent = '';
   if (cost == null) {
     up.textContent = 'Fully upgraded';
     up.disabled = true;
+    up.classList.remove('poor');
     $('tp-role').textContent = def.role;
   } else {
     up.disabled = false;
-    up.innerHTML = '';
-    up.append(`Upgrade · ${cost}`);
+    const wrap = document.createElement('span');
+    wrap.className = 'up-preview';
+    const img = document.createElement('img');
+    img.alt = '';
+    img.src = thumbs.tower[t.type][t.level + 1];
+    wrap.append(img, `Upgrade ${cost}`);
+    up.append(wrap);
+    up.setAttribute('aria-label', `Upgrade to level ${t.level + 2} for ${cost} gold`);
     up.classList.toggle('poor', lane.gold < cost);
     const N = def.levels[t.level + 1];
-    $('tp-role').textContent = `Next: damage ${N.dmg}, ${N.rate.toFixed(1)}/s, range ${N.range}${N.slow ? `, slow ${Math.round(N.slow * 100)}%` : ''}${N.splash ? `, splash ${N.splash}` : ''}.`;
+    $('tp-role').textContent = `Level ${t.level + 2} (${LEVEL_NAMES[t.level + 1]}): damage ${N.dmg}, ${N.rate.toFixed(1)}/s, range ${N.range}${N.slow ? `, slow ${Math.round(N.slow * 100)}%` : ''}${N.splash ? `, splash ${N.splash}` : ''}.`;
   }
   const value = lane.sellValue(t);
   $('tp-sell').textContent = lane.canUndo(t) ? `Undo · +${value}` : `Sell · +${value}`;
@@ -625,7 +754,7 @@ $('tp-upgrade').addEventListener('click', () => {
     refreshPops();
   } else if (res.reason === 'gold') {
     sfx.play('denied');
-    toast(`The upgrade costs ${cost} gold. You need ${cost - me.lane.gold} more.`);
+    toast(`The upgrade costs ${cost} gold. You need ${Math.ceil(cost - me.lane.gold)} more.`);
   }
 });
 $('tp-sell').addEventListener('click', () => {
@@ -644,6 +773,7 @@ function layout() {
   const w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const h = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
   renderer.layout(w, h);
+  track.resize();
   if (sel) placePop(sel.kind === 'build' ? $('build-pop') : $('tower-pop'), sel.c, sel.r);
 }
 window.addEventListener('resize', () => { if (running) layout(); });
@@ -706,12 +836,14 @@ function showEnd() {
       ? `Both castles fell at ${t}.`
       : `Your castle fell at ${t}. The bot had ${opp.lane.lives} ${opp.lane.lives === 1 ? 'life' : 'lives'} left.`;
   const s = me.lane.stats;
+  const through = opp.lane.stats.livesLostTo[ME] || 0;
   const rows = [
     ['Enemies slain', s.kills],
     ['Leaked', s.leaks],
     ['Towers built', `${s.built}${s.upgrades ? ` (+${s.upgrades} upgrades)` : ''}`],
     ['Enemies sent', s.unitsSent],
-    ['Final income', `+${me.lane.income}`],
+    ['Lives you took', through],
+    ['Final income', `+${me.lane.payout()}`],
     [`Record vs ${DIFFICULTIES[diff].label}`, `${r.w}–${r.l}`],
   ];
   const dl = $('end-stats');
@@ -756,4 +888,4 @@ initMenu();
 show('menu');
 
 // Handle for automated checks in a browser; does nothing on its own.
-window.__sl = { get match() { return match; }, renderer };
+window.__sl = { get match() { return match; }, renderer, get watching() { return watching; } };

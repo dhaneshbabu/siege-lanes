@@ -1,15 +1,16 @@
 // One player's lane: towers, enemies, projectiles, gold, income and lives.
 // Pure simulation with a fixed tick; no DOM. Each phone simulates its own lane.
 import { COLS, ROWS, DT, TICK_HZ, ECON, START_LIVES, ENEMIES, TOWERS } from './config.js';
-import { PATH_LEN, pathPos, isPath, inGrid, cellIndex } from './geom.js';
+import { PATH_LEN, pathPos, isPlot, inGrid, cellIndex } from './geom.js';
 
 const tmp = { x: 0, y: 0, a: 0 };
 
 export class Lane {
-  constructor({ id, pace = 1, emit = false }) {
+  constructor({ id, pace = 1, emit = false, goldMul = 1 }) {
     this.id = id;
     this.pace = pace;
     this.emit = emit; // collect events for rendering and sound
+    this.goldMul = goldMul; // bot difficulty: share of normal income and bounties
     this.gold = ECON.startGold;
     this.income = ECON.baseIncome;
     this.lives = START_LIVES;
@@ -25,13 +26,13 @@ export class Lane {
     this.events = [];
     this.nextId = 1;
     this.recentLeaks = []; // ticks of recent leaks (used by bots)
-    this.stats = { kills: 0, leaks: 0, livesLost: 0, built: 0, upgrades: 0, sends: 0, unitsSent: 0, towerGold: 0, sendGold: 0, peakIncome: this.income };
+    this.stats = { kills: 0, leaks: 0, livesLost: 0, livesLostTo: {}, built: 0, upgrades: 0, sends: 0, unitsSent: 0, towerGold: 0, sendGold: 0, peakIncome: this.income };
   }
 
   ev(e) { if (this.emit) this.events.push(e); }
 
   // ---------- actions ----------
-  canBuild(c, r) { return inGrid(c, r) && !isPath(c, r) && !this.towers[cellIndex(c, r)]; }
+  canBuild(c, r) { return isPlot(c, r) && !this.towers[cellIndex(c, r)]; }
   towerAt(c, r) { return inGrid(c, r) ? this.towers[cellIndex(c, r)] : null; }
 
   build(type, c, r) {
@@ -162,9 +163,10 @@ export class Lane {
     }
 
     if (tick >= this.nextIncome) {
-      this.gold += this.income;
+      const amount = this.payout();
+      this.gold += amount;
       this.nextIncome += this.incomeEvery;
-      this.ev({ t: 'income', amount: this.income });
+      this.ev({ t: 'income', amount });
     }
 
     if (tick % 20 === 0) {
@@ -247,8 +249,12 @@ export class Lane {
     }
   }
 
+  /** Gold paid at each income tick. */
+  payout() { return Math.round(this.income * this.goldMul); }
+
   kill(e, p) {
-    const bounty = e.sentBy != null ? Math.max(1, Math.round(e.bounty * ECON.sentBountyShare)) : e.bounty;
+    const base = e.sentBy != null ? Math.max(1, Math.round(e.bounty * ECON.sentBountyShare)) : e.bounty;
+    const bounty = Math.max(1, Math.round(base * this.goldMul));
     this.gold += bounty;
     this.stats.kills++;
     if (p && p.from) p.from.kills++;
@@ -260,6 +266,7 @@ export class Lane {
     this.lives = Math.max(0, this.lives - lost);
     this.stats.leaks++;
     this.stats.livesLost += lost;
+    if (e.sentBy != null) this.stats.livesLostTo[e.sentBy] = (this.stats.livesLostTo[e.sentBy] || 0) + lost;
     this.recentLeaks.push(this.tick);
     this.ev({ t: 'leak', kind: e.kind, lost, sentBy: e.sentBy });
   }

@@ -1,13 +1,15 @@
 // Practice opponent. It plays by the same rules and with the same actions as a person:
 // it builds and upgrades in its own lane and sends enemies at you. It sees only its own lane,
 // the public wave schedule and what has been sent at it, never your towers.
-import { TICK_HZ, TOWERS, TOWER_ORDER, ENEMIES, ENEMY_ORDER, SENDS, SEND_BY_ID, SPAWN_GAP, CLOCK, waveHpMul, sentHpMul } from './config.js';
+import { TICK_HZ, TOWERS, TOWER_ORDER, ENEMIES, ENEMY_ORDER, SENDS, SEND_BY_ID, SPAWN_GAP, waveHpMul, sentHpMul } from './config.js';
 import { BUILD_CELLS, coverage, PATH_LEN } from './geom.js';
 
+// goldMul: share of normal income and bounties. Hard earns a little more, Easy a little less,
+// on top of playing sharper or sloppier.
 export const BOT_PARAMS = {
-  easy: { think: 3.0, comfort: 0.85, safety: 1.2, sendShare: 0.5, spotTop: 16, mistake: 0.35, reserve: 15, saveForGiant: false, maxSends: 1, eco: 0.5, upgradeBias: 0.7, react: 0.5 },
-  normal: { think: 1.2, comfort: 0.75, safety: 1.6, sendShare: 0.75, spotTop: 4, mistake: 0.08, reserve: 25, saveForGiant: true, maxSends: 2, eco: 0.85, upgradeBias: 1.0, react: 0.8 },
-  hard: { think: 0.5, comfort: 0.7, safety: 1.9, sendShare: 1.0, spotTop: 1, mistake: 0, reserve: 35, saveForGiant: true, maxSends: 3, eco: 1.0, upgradeBias: 1.05, react: 1.0 },
+  easy: { goldMul: 0.85, think: 3.0, comfort: 0.85, safety: 1.2, sendShare: 0.5, spotTop: 16, mistake: 0.35, reserve: 15, saveForGiant: false, maxSends: 1, eco: 0.5, upgradeBias: 0.7, react: 0.5 },
+  normal: { goldMul: 1.0, think: 1.2, comfort: 0.75, safety: 1.45, sendShare: 0.75, spotTop: 4, mistake: 0.08, reserve: 25, saveForGiant: true, maxSends: 2, eco: 0.85, upgradeBias: 1.0, react: 0.8 },
+  hard: { goldMul: 1.15, think: 0.5, comfort: 0.7, safety: 1.55, sendShare: 1.0, spotTop: 1, mistake: 0, reserve: 30, saveForGiant: true, maxSends: 3, eco: 1.2, upgradeBias: 1.05, react: 1.0 },
 };
 
 // How tightly each enemy bunches up, for splash value.
@@ -183,11 +185,11 @@ export class Bot {
     const m = this.match;
     const g = {};
     for (const k of ENEMY_ORDER) g[k] = { hp: 0, dur: 0 };
-    const waveSec = CLOCK.waveEvery / m.pace;
     const nw = m.nextWave();
     for (let j = 0; j < 2; j++) {
-      const comp = m.waveComposition(nw.n + j);
-      const mul = waveHpMul(m.battleTime() + (nw.inSec + j * waveSec) * m.pace);
+      const at = nw.tick + j * m.waveEvery;
+      const comp = m.waveComposition(nw.n + j, at);
+      const mul = waveHpMul(m.battleTime(at));
       for (const { kind, count } of comp) {
         const hp = ENEMIES[kind].hp * count * mul;
         if (hp > g[kind].hp) { g[kind].hp = hp; g[kind].dur = count * SPAWN_GAP[kind]; }

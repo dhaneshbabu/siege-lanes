@@ -9,8 +9,8 @@ It runs entirely as static files, so GitHub Pages hosts it:
 
 ## Status
 
-- **Stage 1 (now): practice against a bot.** Easy, Normal or Hard; Short (about 7 min) or
-  Standard (about 12 min) matches.
+- **Stage 1 (now): practice against a bot.** Easy, Normal or Hard; Short (4–6 min) or
+  Standard (6–9 min) matches.
 - Stage 2: 1v1 between phones (WebRTC via PeerJS, same Wi-Fi or across networks).
 - Stage 3: 2v2 with four phones.
 - Stage 4: balance and polish.
@@ -21,14 +21,20 @@ The phone-to-phone connection test lives at [`/nettest/`](https://dhaneshbabu.gi
 
 - 9×12 lane with a fixed winding road. Enemies leak through the castle gate and cost lives
   (Ogres 2, Siege Giants 5). Everyone starts with 20 lives.
+- Towers go on 24 stone plots beside the road (`PLOTS` in `src/config.js`).
 - Towers: Archer (fast, weak against armour), Cannon (splash), Frost Mage (slows),
-  Ballista (long range, targets the toughest enemy, ignores armour). Each has 3 levels.
-  Selling within 4 seconds of building refunds everything.
+  Ballista (long range, targets the toughest enemy, ignores armour). Each has 3 levels with
+  their own look: wooden post, stone tower, keep. Selling within 4 seconds of building
+  refunds everything.
+- The strip under the HUD shows the opponent's road as a line with your units on it; tap it
+  to watch their whole lane.
 - Sends: Goblins, Scouts, Shieldbearers, Ogre (unlocks later), Siege Giant (unlocks late).
 - Background waves hit every player at the same moment and toughen over time. Sudden death
   doubles the cost of leaks and speeds up the toughening.
-- Short matches run the battle clock 1.5× faster (waves, income, unlocks, sudden death);
-  combat itself runs at the same speed.
+- A wave arrives every 12 seconds in both lengths. Short runs the growth clock faster
+  (wave toughness, income, unlocks, sudden death), so it ends sooner with the same balance.
+- Bot difficulty: Easy earns 15% less gold and plays sloppier; Hard earns 15% more and plays
+  sharper and more aggressively.
 
 ## Code
 

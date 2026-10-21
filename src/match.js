@@ -6,11 +6,11 @@ import {
   WAVE_PATTERN, SUDDEN_DEATH, waveHpMul, waveCountMul, sentHpMul,
 } from './config.js';
 import { Lane } from './sim.js';
-import { Bot } from './bot.js';
+import { Bot, BOT_PARAMS } from './bot.js';
 import { mulberry32, hashString, randomSeed } from './rng.js';
 
 export class Match {
-  constructor({ mode = 'standard', seed = randomSeed(), players }) {
+  constructor({ mode = 'standard', seed = randomSeed(), players, emitAll = false }) {
     this.mode = MODES[mode] || MODES.standard;
     this.pace = this.mode.pace;
     this.seed = seed >>> 0;
@@ -19,8 +19,8 @@ export class Match {
     this.result = null;
     this.events = [];
     this.waveN = 0;
-    this.nextWaveTick = this.toTicks(CLOCK.firstWave);
-    this.waveEvery = this.toTicks(CLOCK.waveEvery);
+    this.nextWaveTick = Math.round(CLOCK.firstWave * TICK_HZ);
+    this.waveEvery = Math.round(CLOCK.waveEvery * TICK_HZ);
     this.sdTick = this.toTicks(CLOCK.suddenDeath);
     this.suddenDeath = false;
     this.unlocks = SENDS.filter((s) => s.unlock > 0).map((s) => ({ id: s.id, tick: this.toTicks(s.unlock), done: false }));
@@ -34,7 +34,7 @@ export class Match {
       alive: true,
       outAt: null,
       cooldowns: {},
-      lane: new Lane({ id: p.id, pace: this.pace, emit: p.kind === 'human' }),
+      lane: new Lane({ id: p.id, pace: this.pace, emit: emitAll || p.kind === 'human', goldMul: p.kind === 'bot' ? BOT_PARAMS[p.difficulty || 'normal'].goldMul : 1 }),
     }));
     this.byId = new Map(this.players.map((p) => [p.id, p]));
     this.bots = this.players
@@ -88,16 +88,16 @@ export class Match {
     }
   }
 
-  /** Units in background wave n. */
-  waveComposition(n) {
+  /** Units in background wave n, spawning at the given tick. */
+  waveComposition(n, tick = this.tick) {
     const base = WAVE_PATTERN[(n - 1) % WAVE_PATTERN.length];
-    const mul = waveCountMul(n);
+    const mul = waveCountMul(this.battleTime(tick));
     return base.map(([kind, count]) => ({ kind, count: Math.max(1, Math.round(count * mul)) }));
   }
 
   spawnWave() {
     const n = ++this.waveN;
-    const comp = this.waveComposition(n);
+    const comp = this.waveComposition(n, this.tick);
     const hpMul = waveHpMul(this.battleTime());
     for (const p of this.players) if (p.alive) this.enqueueGroup(p.lane, comp, hpMul, null, p.lane.tick + 1);
     this.ev({ t: 'wave', n, comp });
@@ -166,7 +166,7 @@ export class Match {
   nextWave() {
     const n = this.waveN + 1;
     const sudden = this.suddenDeath || this.nextWaveTick >= this.sdTick;
-    return { n, inSec: Math.max(0, (this.nextWaveTick - this.tick) * DT), comp: this.waveComposition(n), sudden };
+    return { n, inSec: Math.max(0, (this.nextWaveTick - this.tick) * DT), comp: this.waveComposition(n, this.nextWaveTick), sudden, tick: this.nextWaveTick };
   }
 
   /** Hit points of a wave composition at a given battle time. */
