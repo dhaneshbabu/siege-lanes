@@ -22,6 +22,12 @@ It runs entirely as static files, so GitHub Pages hosts it:
   towns and castles. 1 v 1, 2 v 2, or 3–4 player free-for-all against bots. Matches last
   4 minutes; if time runs out, the most land wins. `node conquest/tools/balance.mjs` runs
   bot-vs-bot matches.
+- **Powder Keg** ([`/arena/`](https://dhaneshbabu.github.io/siege-lanes/arena/)): a
+  Bomberman-style courtyard brawl. Drop powder kegs, break crates for power-ups (extra keg,
+  bigger blast, boots) and be the last knight standing. Stone closes in from the edges after
+  about a minute. 1 v 1, 2 v 2, or 3–4 player free-for-all against bots, first to 2 or 3 round
+  wins. On-screen stick and keg button, or arrow keys/WASD and Space.
+  `node arena/tools/balance.mjs` runs bot-vs-bot rounds.
 
 The phone-to-phone connection test lives at [`/nettest/`](https://dhaneshbabu.github.io/siege-lanes/nettest/).
 

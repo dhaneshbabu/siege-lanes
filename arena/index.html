@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#151a22">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Bomb-the-courtyard brawl for phones. Drop powder kegs, break crates, grab power-ups and be the last knight standing.">
+<title>Powder Keg</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=Grenze+Gotisch:wght@700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 28"><path d="M2 2h20v10c0 7.5-4.6 11.7-10 14C6.6 23.7 2 19.5 2 12Z"/></symbol>
+  </defs>
+</svg>
+
+<!-- Menu -->
+<section id="menu" class="screen menu" hidden>
+  <header class="masthead">
+    <div class="wrap">
+      <p class="eyebrow">Courtyard brawl for phones</p>
+      <h1 class="wordmark">Powder Keg</h1>
+    </div>
+  </header>
+  <div class="wall" aria-hidden="true"></div>
+  <main class="wrap menu-main">
+    <section class="panel stack" aria-labelledby="practice-title">
+      <h2 id="practice-title" class="panel-title">Practice against bots</h2>
+      <p class="hint">Run around the courtyard, drop powder kegs to blast crates open, grab what's inside and catch your rivals in the blast. Last knight standing wins the round.</p>
+      <fieldset class="seg">
+        <legend>Match</legend>
+        <div class="seg-row two" id="seg-format">
+          <label><input type="radio" name="format" value="duel" id="fmt-duel"><span>1 v 1<small>You and one bot</small></span></label>
+          <label><input type="radio" name="format" value="teams" id="fmt-teams"><span>2 v 2<small>You and an ally</small></span></label>
+          <label><input type="radio" name="format" value="three" id="fmt-three"><span>3 players<small>Free for all</small></span></label>
+          <label><input type="radio" name="format" value="four" id="fmt-four"><span>4 players<small>Free for all</small></span></label>
+        </div>
+      </fieldset>
+      <fieldset class="seg">
+        <legend>Bots</legend>
+        <div class="seg-row" id="seg-difficulty">
+          <label><input type="radio" name="difficulty" value="easy" id="diff-easy"><span>Easy</span></label>
+          <label><input type="radio" name="difficulty" value="normal" id="diff-normal"><span>Normal</span></label>
+          <label><input type="radio" name="difficulty" value="hard" id="diff-hard"><span>Hard</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="seg">
+        <legend>Round wins to take the match</legend>
+        <div class="seg-row two" id="seg-target">
+          <label><input type="radio" name="target" value="2" id="target-2"><span>2<small>Quick</small></span></label>
+          <label><input type="radio" name="target" value="3" id="target-3"><span>3<small>Standard</small></span></label>
+        </div>
+      </fieldset>
+      <button class="btn primary" id="btn-start" type="button">Start practice</button>
+      <p class="record" id="record"></p>
+    </section>
+
+    <section class="panel stack soon" aria-labelledby="friends-title">
+      <h2 id="friends-title" class="panel-title">Play with friends</h2>
+      <p class="hint">Coming next if this one is fun: everyone plays on their own phone, on the same Wi-Fi or from anywhere, and bots fill the empty seats.</p>
+    </section>
+
+    <button class="btn ghost" id="btn-howto" type="button">How to play</button>
+    <p class="foot"><a href="../">Siege Lanes</a> · <a href="../conquest/">Castle Conquest</a></p>
+  </main>
+</section>
+
+<!-- Game -->
+<section id="game" class="screen game" hidden>
+  <header class="hud">
+    <div class="chips" id="chips"></div>
+    <div class="clock" id="clock-box">
+      <b id="clock">0:00</b>
+      <small id="clock-note">Round 1</small>
+    </div>
+    <button class="icon-btn" id="btn-pause" type="button" aria-label="Pause"><svg aria-hidden="true"><use href="#i-pause"/></svg></button>
+  </header>
+
+  <div class="court-wrap" id="court-wrap">
+    <canvas id="court" aria-label="The courtyard"></canvas>
+    <div class="banner" id="banner" hidden>
+      <p class="banner-kicker" id="banner-kicker"></p>
+      <p class="banner-main" id="banner-main"></p>
+      <p class="banner-sub" id="banner-sub"></p>
+    </div>
+    <button class="skip-btn" id="btn-skip" type="button" hidden>Skip to the next round</button>
+  </div>
+
+  <div class="powers" id="powers" aria-label="Your power-ups">
+    <span class="pw" id="pw-keg"><img alt=""><b>1</b><small>kegs</small></span>
+    <span class="pw" id="pw-fire"><img alt=""><b>2</b><small>blast</small></span>
+    <span class="pw" id="pw-boots"><img alt=""><b>0</b><small>boots</small></span>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <div class="pad">
+    <div class="stick-zone" id="stick-zone" aria-label="Movement: drag in this area">
+      <div class="stick-base" id="stick-base"><div class="stick-knob" id="stick-knob"></div></div>
+      <span class="zone-hint" id="zone-hint">Drag here to run</span>
+    </div>
+    <div class="keg-zone">
+      <button class="keg-btn" id="keg-btn" type="button" aria-label="Drop a keg">
+        <img alt="" id="keg-icon">
+        <span class="keg-label">Keg</span>
+        <b class="keg-count" id="keg-count">1</b>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Pause -->
+<div class="overlay" id="pause" hidden>
+  <div class="sheet stack" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <h2 class="sheet-title" id="pause-title">Paused</h2>
+    <button class="btn primary" id="btn-resume" type="button">Resume</button>
+    <button class="btn" id="btn-sound" type="button" aria-pressed="true">Sound on</button>
+    <button class="btn ghost" id="btn-howto2" type="button">How to play</button>
+    <button class="btn ghost danger" id="btn-quit" type="button">Leave match</button>
+  </div>
+</div>
+
+<!-- End of match -->
+<div class="overlay" id="end" hidden>
+  <div class="sheet stack" role="dialog" aria-modal="true" aria-labelledby="end-title">
+    <p class="eyebrow" id="end-eyebrow"></p>
+    <h2 class="end-title" id="end-title"></h2>
+    <p class="hint" id="end-sub"></p>
+    <dl class="stats" id="end-stats"></dl>
+    <button class="btn primary" id="btn-again" type="button">Play again</button>
+    <button class="btn ghost" id="btn-menu" type="button">Back to menu</button>
+  </div>
+</div>
+
+<!-- How to play -->
+<div class="overlay" id="howto" hidden>
+  <div class="sheet sheet-scroll" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+    <h2 class="sheet-title" id="howto-title">How to play</h2>
+    <div class="howto">
+      <h3>The goal</h3>
+      <p>Be the last knight standing. Each round is in a fresh courtyard; the first side to win the set number of rounds takes the match.</p>
+      <h3>Controls</h3>
+      <p>Put your left thumb anywhere in the left half of the controls and drag to run. Tap <b>Keg</b> with your right thumb to drop a powder keg where you stand. On a keyboard: arrow keys or WASD to run, Space to drop a keg.</p>
+      <ul class="legend" id="legend-pieces"></ul>
+      <h3>Blasts</h3>
+      <p>A keg bursts about two seconds after you drop it, in a cross along the row and the column. Stone stops a blast. A crate stops it too, and breaks. A blast that reaches another keg sets it off at once.</p>
+      <p>Your own blasts can get you, so drop a keg and get round a corner. In 2 v 2, your ally's blasts don't hurt you.</p>
+      <h3>Power-ups</h3>
+      <p>Some crates hide a power-up. Walk over it to pick it up. Blasts burn power-ups lying on the ground.</p>
+      <ul class="legend" id="legend-powers"></ul>
+      <h3>Closing in</h3>
+      <p>About a minute into each round, stone starts falling from the edges inwards (a red square marks the next spot) until only the middle is left. Then comes the last stand: kegs burn faster and every blast reaches all the way across. A few seconds later the stone starts falling again. If everyone left is caught at the same moment, the round is a draw.</p>
+      <h3>Tips</h3>
+      <p>Never drop a keg in a dead end. Count your way out before you drop it. Grab Bigger blast early, it makes trapping rivals much easier.</p>
+    </div>
+    <button class="btn primary" id="btn-howto-close" type="button">Got it</button>
+  </div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
