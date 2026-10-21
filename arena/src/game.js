@@ -7,6 +7,8 @@ import { Bot } from './bot.js';
 import { mulberry32, randomSeed } from './rng.js';
 
 const BOT_NAMES = ['Sir Gules', 'Lady Vert', 'Duke Purpure'];
+/** Bot names by seat, for games with friends where a bot can sit anywhere. */
+export const SEAT_BOT_NAMES = ['Sir Azure', 'Sir Gules', 'Lady Vert', 'Duke Purpure'];
 
 /**
  * format: key of FORMATS. sides: per seat { kind: 'human'|'bot', name, difficulty }.
@@ -34,6 +36,7 @@ export function createMatch({ format = 'duel', difficulty = 'normal', seed = ran
     players,
     wins: new Map(teams.map((t) => [t, 0])),
     roundNo: 0,
+    rseed: 0,
     arena: null,
     bots: [],
     history: [], // winning team per round, null for a draw
@@ -44,6 +47,7 @@ export function createMatch({ format = 'duel', difficulty = 'normal', seed = ran
     newRound() {
       this.roundNo++;
       const rseed = (seed + Math.imul(this.roundNo, 2654435761)) >>> 0;
+      this.rseed = rseed;
       const layout = generateArena(f, rseed);
       this.arena = new Arena({ layout, players });
       this.arena.theme = THEME_IDS[(this.roundNo - 1) % THEME_IDS.length];

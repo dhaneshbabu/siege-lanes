@@ -10,6 +10,8 @@ export const DIRS = [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y
 // Flame arm bits: which neighbours a burning cell connects to (for drawing beams).
 export const ARM = [1, 2, 4, 8]; // left, right, up, down
 
+let nextUid = 1; // tells rounds apart (a copy of a round keeps its id)
+
 /** Stones fall ring by ring from the edge, four at a time, one on each side. */
 function closingOrder(n) {
   const groups = [];
@@ -32,6 +34,7 @@ export class Arena {
    */
   constructor({ layout, players }) {
     const n = layout.n;
+    this.uid = nextUid++;
     this.n = n;
     this.spawns = layout.spawns.map((s) => ({ x: s.x, y: s.y }));
     this.tiles = Uint8Array.from(layout.tiles);
@@ -344,12 +347,12 @@ export class Arena {
     this.ev({ t: 'death', player: p.index, by });
   }
 
-  applyPower(p, kind) {
+  applyPower(p, kind, cell) {
     if (kind === 'keg') p.kegs = Math.min(MAX_KEGS, p.kegs + 1);
     else if (kind === 'fire') p.range = Math.min(MAX_RANGE, p.range + 1);
     else if (kind === 'boots') p.speedLv = Math.min(MAX_SPEED_LV, p.speedLv + 1);
     p.stats.powers++;
-    this.ev({ t: 'power', player: p.index, kind });
+    this.ev({ t: 'power', player: p.index, kind, cell });
   }
 
   checkEnd() {
@@ -442,7 +445,7 @@ export class Arena {
       const kind = this.items.get(c);
       if (kind) {
         this.items.delete(c);
-        this.applyPower(p, kind);
+        this.applyPower(p, kind, c);
       }
     }
     this.checkEnd();

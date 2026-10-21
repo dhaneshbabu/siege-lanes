@@ -34,6 +34,27 @@
   </header>
   <div class="wall" aria-hidden="true"></div>
   <main class="wrap menu-main">
+    <section class="panel stack friends" id="friends" aria-labelledby="friends-title">
+      <h2 id="friends-title" class="panel-title">Play with friends</h2>
+      <p class="hint">Everyone plays on their own phone, on the same Wi-Fi or from anywhere. Bots take any empty seats.</p>
+      <p class="invited" id="invited" hidden>You're invited to game <span class="code-inline" id="invited-code"></span></p>
+      <div class="name-field">
+        <label class="field-label" for="mp-name">Your name</label>
+        <input type="text" id="mp-name" maxlength="12" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done">
+      </div>
+      <button class="btn primary" id="btn-host" type="button">Host a game</button>
+      <p class="or" id="or-host">or join one</p>
+      <form id="join-form" class="join-form" novalidate>
+        <label class="field-label" for="mp-code">Code from the host's phone</label>
+        <div class="code-row">
+          <input type="text" id="mp-code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" enterkeyhint="go">
+          <button class="btn" type="submit" id="btn-join">Join</button>
+        </div>
+      </form>
+      <p class="form-error" id="mp-error" role="status" hidden></p>
+    </section>
+
+
     <section class="panel stack" aria-labelledby="practice-title">
       <h2 id="practice-title" class="panel-title">Practice against bots</h2>
       <p class="hint">Run around the courtyard, drop powder kegs to blast crates open, grab what's inside and catch your rivals in the blast. Last knight standing wins the round.</p>
@@ -65,13 +86,70 @@
       <p class="record" id="record"></p>
     </section>
 
-    <section class="panel stack soon" aria-labelledby="friends-title">
-      <h2 id="friends-title" class="panel-title">Play with friends</h2>
-      <p class="hint">Coming next if this one is fun: everyone plays on their own phone, on the same Wi-Fi or from anywhere, and bots fill the empty seats.</p>
-    </section>
-
     <button class="btn ghost" id="btn-howto" type="button">How to play</button>
     <p class="foot"><a href="../">Siege Lanes</a> · <a href="../conquest/">Castle Conquest</a></p>
+  </main>
+</section>
+
+<!-- Lobby: play with friends -->
+<section id="lobby" class="screen lobby" hidden>
+  <header class="masthead">
+    <div class="wrap">
+      <p class="eyebrow">Play with friends</p>
+      <h1 class="lobby-title">Game <span class="lobby-code" id="lobby-code">····</span></h1>
+      <p class="lobby-status" id="lobby-status" aria-live="polite"></p>
+    </div>
+  </header>
+  <div class="wall" aria-hidden="true"></div>
+  <main class="wrap menu-main">
+    <p class="form-error" id="lobby-error" role="status" hidden></p>
+    <section class="panel invite-card" id="invite-card" aria-label="Invite friends" hidden>
+      <div class="qr" id="lobby-qr" role="img" aria-label="QR code that opens the invite link"></div>
+      <div class="invite-txt">
+        <p class="hint">Friends scan this with their phone's camera, or open <span class="url" id="invite-url"></span> and type the code.</p>
+        <button class="btn" id="btn-share" type="button">Share the invite link</button>
+        <p class="hint small" id="share-note" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="panel stack" aria-labelledby="seats-title">
+      <h2 class="panel-title" id="seats-title">Knights</h2>
+      <ol class="seats" id="seats"></ol>
+      <p class="hint" id="seats-hint" hidden></p>
+    </section>
+
+    <section class="panel stack" id="lobby-settings" aria-labelledby="lobby-set-title">
+      <h2 class="panel-title" id="lobby-set-title">Match</h2>
+      <fieldset class="seg">
+        <legend>Knights</legend>
+        <div class="seg-row two">
+          <label><input type="radio" name="lformat" value="duel"><span>1 v 1<small>Two knights</small></span></label>
+          <label><input type="radio" name="lformat" value="teams"><span>2 v 2<small>Two sides</small></span></label>
+          <label><input type="radio" name="lformat" value="three"><span>3 players<small>Free for all</small></span></label>
+          <label><input type="radio" name="lformat" value="four"><span>4 players<small>Free for all</small></span></label>
+        </div>
+      </fieldset>
+      <fieldset class="seg" id="lseg-difficulty">
+        <legend>Bots in empty seats</legend>
+        <div class="seg-row">
+          <label><input type="radio" name="ldifficulty" value="easy"><span>Easy</span></label>
+          <label><input type="radio" name="ldifficulty" value="normal"><span>Normal</span></label>
+          <label><input type="radio" name="ldifficulty" value="hard"><span>Hard</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="seg">
+        <legend>Round wins to take the match</legend>
+        <div class="seg-row two">
+          <label><input type="radio" name="ltarget" value="2"><span>2<small>Quick</small></span></label>
+          <label><input type="radio" name="ltarget" value="3"><span>3<small>Standard</small></span></label>
+        </div>
+      </fieldset>
+    </section>
+
+    <p class="hint center" id="lobby-note" hidden></p>
+    <button class="btn primary" id="btn-lobby-start" type="button">Start the match</button>
+    <p class="lobby-wait" id="lobby-wait" hidden></p>
+    <button class="btn ghost danger" id="btn-lobby-leave" type="button">Leave</button>
   </main>
 </section>
 
@@ -95,6 +173,7 @@
       <p class="banner-tip" id="banner-tip"></p>
     </div>
     <button class="skip-btn" id="btn-skip" type="button" hidden>Skip to the next round</button>
+    <p class="net-note" id="net-note" role="status" hidden></p>
   </div>
 
   <div class="powers" id="powers" aria-label="Your power-ups">
@@ -133,22 +212,30 @@
 <div class="overlay" id="pause" hidden>
   <div class="sheet stack" role="dialog" aria-modal="true" aria-labelledby="pause-title">
     <h2 class="sheet-title" id="pause-title">Paused</h2>
+    <p class="hint" id="pause-note" hidden>The game keeps going while this is open.</p>
     <button class="btn primary" id="btn-resume" type="button">Resume</button>
     <button class="btn" id="btn-sound" type="button" aria-pressed="true">Sound on</button>
     <button class="btn ghost" id="btn-howto2" type="button">How to play</button>
+    <button class="btn ghost" id="btn-to-lobby" type="button" hidden>Back to the lobby</button>
     <button class="btn ghost danger" id="btn-quit" type="button">Leave match</button>
   </div>
 </div>
 
 <!-- End of match -->
 <div class="overlay" id="end" hidden>
-  <div class="sheet stack" role="dialog" aria-modal="true" aria-labelledby="end-title">
-    <p class="eyebrow" id="end-eyebrow"></p>
-    <h2 class="end-title" id="end-title"></h2>
-    <p class="hint" id="end-sub"></p>
-    <dl class="stats" id="end-stats"></dl>
-    <button class="btn primary" id="btn-again" type="button">Play again</button>
-    <button class="btn ghost" id="btn-menu" type="button">Back to menu</button>
+  <div class="sheet stack end-sheet" role="dialog" aria-modal="true" aria-labelledby="end-title">
+    <div class="stack end-a">
+      <p class="eyebrow" id="end-eyebrow"></p>
+      <h2 class="end-title" id="end-title"></h2>
+      <p class="hint" id="end-sub"></p>
+      <dl class="stats" id="end-stats"></dl>
+    </div>
+    <div class="stack end-b">
+      <ol class="standings" id="end-standings" aria-label="Everyone in the match" hidden></ol>
+      <p class="hint" id="end-wait" hidden></p>
+      <button class="btn primary" id="btn-again" type="button">Play again</button>
+      <button class="btn ghost" id="btn-menu" type="button">Back to menu</button>
+    </div>
   </div>
 </div>
 
@@ -172,6 +259,9 @@
       <p>Before a keg goes off, the cells it will hit glow red, getting redder as the fuse burns down. Pick up Bigger blast and you'll see your red cross grow.</p>
       <h3>Closing in</h3>
       <p>About a minute into each round, stone starts falling from the edges inwards (a red square marks the next spot) until only the middle is left. Then comes the last stand: kegs burn faster and every blast reaches all the way across. A few seconds later the stone starts falling again. If everyone left is caught at the same moment, the round is a draw.</p>
+      <h3>Playing with friends</h3>
+      <p>One phone hosts: it gets a four-letter code and a QR code to share. Everyone else joins with the code, on the same Wi-Fi or from anywhere. Bots take any empty seats, and the host can tap two knights in the lobby to swap their places (that's how you pick sides for 2 v 2).</p>
+      <p>The game runs on the host's phone, so keep its screen on. If a friend's phone locks or loses signal, a bot plays for it until it's back.</p>
       <h3>Tips</h3>
       <p>Never drop a keg in a dead end. Count your way out before you drop it. Grab Bigger blast early, it makes trapping rivals much easier.</p>
     </div>
@@ -179,6 +269,8 @@
   </div>
 </div>
 
+<script src="../vendor/peerjs-1.5.5.min.js" defer></script>
+<script src="../vendor/qrcode-1.4.4.js" defer></script>
 <script type="module" src="src/main.js"></script>
 </body>
 </html>

@@ -25,9 +25,18 @@ It runs entirely as static files, so GitHub Pages hosts it:
 - **Powder Keg** ([`/arena/`](https://dhaneshbabu.github.io/siege-lanes/arena/)): a
   Bomberman-style courtyard brawl. Drop powder kegs, break crates for power-ups (extra keg,
   bigger blast, boots) and be the last knight standing. Stone closes in from the edges after
-  about a minute. 1 v 1, 2 v 2, or 3–4 player free-for-all against bots, first to 2 or 3 round
-  wins. On-screen stick and keg button, or arrow keys/WASD and Space.
+  about a minute. 1 v 1, 2 v 2, or 3–4 player free-for-all, first to 2 or 3 round wins.
+  On-screen stick and keg button, or arrow keys/WASD and Space.
   `node arena/tools/balance.mjs` runs bot-vs-bot rounds.
+  - **Practice** against bots on one phone.
+  - **Play with friends**, each on their own phone, on the same Wi-Fi or across networks. One
+    phone hosts and shares a 4-letter code (or QR / invite link); bots fill empty seats and the
+    host can swap seats to pick sides. The host's phone runs the game: every tick it sends each
+    phone the orders it applied for every knight, and since the rules are deterministic each
+    phone replays them into the same courtyard (a hash every second checks; a snapshot
+    repairs). Your own knight runs ahead on a forecast, so the stick answers at once. A phone
+    that locks or drops out gets a stand-in bot until it's back; reloading rejoins the match.
+    Networking: `arena/src/net.js` (links), `arena/src/sync.js` (orders, snapshots, forecast).
 
 The phone-to-phone connection test lives at [`/nettest/`](https://dhaneshbabu.github.io/siege-lanes/nettest/).
 

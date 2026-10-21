@@ -678,6 +678,7 @@ export class ArenaRenderer {
     this.lastNow = 0;
     this.shake = [];
     this.sparkAcc = 0;
+    this.me = 0; // whose knight gets the ring and the big pick-up labels
   }
 
   /** Fit an n×n courtyard (plus its wall) into the canvas's CSS box. */
@@ -741,8 +742,9 @@ export class ArenaRenderer {
 
   /** Walls, towers, floor and decorations never change during a round: draw them once. */
   background(arena) {
-    const key = `${this.w}x${this.h}@${this.dpr}:${this.n}:${arena.theme}`;
-    if (this.bg && this.bgKey === key && this.bgArena === arena) return this.bg;
+    // Keyed on the round, not the object: a phone in a game with friends draws copies of the round.
+    const key = `${this.w}x${this.h}@${this.dpr}:${this.n}:${arena.theme}:${arena.uid}`;
+    if (this.bg && this.bgKey === key) return this.bg;
     const { w, h, dpr, cs, n, ox, oy, lift } = this;
     const th = this.theme;
     const { c, g } = canvasOf(w, h, dpr);
@@ -869,7 +871,6 @@ export class ArenaRenderer {
     }
     this.bg = c;
     this.bgKey = key;
-    this.bgArena = arena;
     return c;
   }
 
@@ -1028,7 +1029,7 @@ export class ArenaRenderer {
           const a = (k / 10) * TAU;
           this.spawn({ k: 'sparkle', x, y, vx: Math.cos(a) * cs * 2.2, vy: Math.sin(a) * cs * 2.2, life: 0.55, s: cs * 0.13, color: POWER_STYLE[e.kind].a });
         }
-        this.spawn({ k: 'text', x, y: y - cs * 0.9, vx: 0, vy: -cs * 0.9, life: 1.3, text: `${POWERS[e.kind].short}!`, color: POWER_STYLE[e.kind].a, big: e.player === 0 });
+        this.spawn({ k: 'text', x, y: y - cs * 0.9, vx: 0, vy: -cs * 0.9, life: 1.3, text: `${POWERS[e.kind].short}!`, color: POWER_STYLE[e.kind].a, big: e.player === this.me });
       } else if (e.t === 'death') {
         const p = arena.players[e.player];
         const x = this.cx(p.x);
@@ -1188,6 +1189,7 @@ export class ArenaRenderer {
   // ---------- the frame ----------
   /** ui: { me, alpha, you: { until } | null } */
   draw(arena, ui, now) {
+    this.me = ui.me;
     const g = this.ctx;
     const { cs, n, lift } = this;
     const dt = Math.min(0.1, Math.max(0, (now - (this.lastNow || now)) / 1000));
