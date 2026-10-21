@@ -1,0 +1,10 @@
+{
+  "name": "siege-lanes",
+  "private": true,
+  "type": "module",
+  "description": "Phone-vs-phone tower defence that runs as static files.",
+  "scripts": {
+    "balance": "node tools/balance.mjs",
+    "serve": "python3 -m http.server 8080"
+  }
+}

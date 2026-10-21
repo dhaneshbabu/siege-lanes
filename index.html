@@ -2,16 +2,178 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#151a22">
 <meta name="color-scheme" content="dark">
+<meta name="description" content="Tower defence for phones. Defend your lane, send enemies down your opponent's road.">
 <title>Siege Lanes</title>
-<script>location.replace('nettest/' + location.search + location.hash);</script>
-<style>
-  body { margin: 0; padding: 24px 16px; background: #151a22; color: #ece2cc; font: 17px/1.45 system-ui, -apple-system, sans-serif; }
-  a { color: #cfa552; }
-</style>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=Grenze+Gotisch:wght@700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<p>The game isn't built yet. <a href="nettest/">Open the connection test</a>.</p>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-castle" viewBox="0 0 24 24"><path d="M3 21V9h3V6h2v3h3V6h2v3h3V6h2v3h3v12h-7v-5a2 2 0 0 0-4 0v5Z"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v9M9.5 9.5c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.6-1 1.4-2.5 1.7-2.5.8-2.5 1.8 1 1.6 2.5 1.6 2.5-.6 2.5-1.6" fill="none" stroke="#1c1607" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 28"><path d="M2 2h20v10c0 7.5-4.6 11.7-10 14C6.6 23.7 2 19.5 2 12Z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2h1.5v11h-13V10Zm2.2 0h5.6V8a2.8 2.8 0 0 0-5.6 0Z"/></symbol>
+  </defs>
+</svg>
+
+<!-- Menu -->
+<section id="menu" class="screen menu" hidden>
+  <header class="masthead">
+    <div class="wrap">
+      <p class="eyebrow">Tower defence for phones</p>
+      <h1 class="wordmark">Siege Lanes</h1>
+    </div>
+  </header>
+  <div class="wall" aria-hidden="true"></div>
+  <main class="wrap menu-main">
+    <section class="panel stack" aria-labelledby="practice-title">
+      <h2 id="practice-title" class="panel-title">Practice against a bot</h2>
+      <p class="hint">Hold your road while the bot holds its own. Send enemies down its road; every send also raises your income. Last castle standing wins.</p>
+      <fieldset class="seg">
+        <legend>Bot</legend>
+        <div class="seg-row" id="seg-difficulty">
+          <label><input type="radio" name="difficulty" value="easy" id="diff-easy"><span>Easy</span></label>
+          <label><input type="radio" name="difficulty" value="normal" id="diff-normal"><span>Normal</span></label>
+          <label><input type="radio" name="difficulty" value="hard" id="diff-hard"><span>Hard</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="seg">
+        <legend>Match length</legend>
+        <div class="seg-row two" id="seg-length">
+          <label><input type="radio" name="length" value="short" id="len-short"><span>Short<small>About 7 min</small></span></label>
+          <label><input type="radio" name="length" value="standard" id="len-standard"><span>Standard<small>About 12 min</small></span></label>
+        </div>
+      </fieldset>
+      <button class="btn primary" id="btn-start" type="button">Start practice</button>
+      <p class="record" id="record"></p>
+    </section>
+
+    <section class="panel stack soon" aria-labelledby="friends-title">
+      <h2 id="friends-title" class="panel-title">Play with friends</h2>
+      <p class="hint">Coming in the next update: host a game on one phone and friends join with a code, on the same Wi-Fi or from anywhere.</p>
+    </section>
+
+    <button class="btn ghost" id="btn-howto" type="button">How to play</button>
+    <p class="foot"><a href="nettest/">Connection test</a></p>
+  </main>
+</section>
+
+<!-- Game -->
+<section id="game" class="screen game" hidden>
+  <header class="hud">
+    <div class="hud-stat lives" id="hud-lives-box" aria-label="Lives">
+      <svg class="i" aria-hidden="true"><use href="#i-castle"/></svg><b id="hud-lives">20</b>
+    </div>
+    <div class="hud-stat gold" id="hud-gold-box" aria-label="Gold">
+      <svg class="i" aria-hidden="true"><use href="#i-coin"/></svg><b id="hud-gold">0</b>
+    </div>
+    <div class="hud-stat income" aria-label="Income">
+      <svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" class="ring-bg"/><circle cx="10" cy="10" r="7.5" class="ring-fg" id="hud-ring"/></svg>
+      <b id="hud-income">+0</b>
+    </div>
+    <div class="hud-clock">
+      <b id="hud-clock">0:00</b>
+      <small id="hud-phase"></small>
+    </div>
+    <button class="icon-btn" id="btn-pause" type="button" aria-label="Pause"><svg aria-hidden="true"><use href="#i-pause"/></svg></button>
+  </header>
+
+  <div class="opp" id="opp">
+    <svg class="shield" id="opp-shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
+    <span class="opp-name" id="opp-name">Bot</span>
+    <span class="opp-stat"><svg class="i" aria-hidden="true"><use href="#i-castle"/></svg><b id="opp-lives">20</b></span>
+    <span class="opp-stat income-mini">+<b id="opp-income">20</b></span>
+    <span class="opp-note" id="opp-note"></span>
+  </div>
+
+  <div class="board-wrap" id="board-wrap">
+    <canvas id="board" aria-label="Your lane. Tap an empty square to build, or a tower to upgrade it."></canvas>
+
+    <div class="pop" id="build-pop" hidden>
+      <p class="pop-title">Build</p>
+      <div class="build-grid" id="build-grid"></div>
+    </div>
+
+    <div class="pop" id="tower-pop" hidden>
+      <div class="pop-head">
+        <img class="pop-icon" id="tp-icon" alt="">
+        <div>
+          <p class="pop-title" id="tp-name"></p>
+          <p class="pop-sub" id="tp-level"></p>
+        </div>
+      </div>
+      <p class="pop-stats" id="tp-stats"></p>
+      <p class="pop-role" id="tp-role"></p>
+      <div class="pop-actions">
+        <button class="btn primary sm" id="tp-upgrade" type="button"></button>
+        <button class="btn sm" id="tp-sell" type="button"></button>
+      </div>
+    </div>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+  </div>
+
+  <div class="nextwave" id="nextwave" aria-live="off"></div>
+  <nav class="sendbar" id="sendbar" aria-label="Send enemies at your opponent"></nav>
+</section>
+
+<!-- Pause -->
+<div class="overlay" id="pause" hidden>
+  <div class="sheet stack" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <h2 class="sheet-title" id="pause-title">Paused</h2>
+    <button class="btn primary" id="btn-resume" type="button">Resume</button>
+    <div class="row2">
+      <button class="btn" id="btn-speed" type="button" aria-pressed="false">Speed 1×</button>
+      <button class="btn" id="btn-sound" type="button" aria-pressed="true">Sound on</button>
+    </div>
+    <button class="btn ghost" id="btn-howto2" type="button">How to play</button>
+    <button class="btn ghost danger" id="btn-quit" type="button">Leave match</button>
+  </div>
+</div>
+
+<!-- End of match -->
+<div class="overlay" id="end" hidden>
+  <div class="sheet stack" role="dialog" aria-modal="true" aria-labelledby="end-title">
+    <p class="eyebrow" id="end-eyebrow"></p>
+    <h2 class="end-title" id="end-title"></h2>
+    <p class="hint" id="end-sub"></p>
+    <dl class="stats" id="end-stats"></dl>
+    <button class="btn primary" id="btn-again" type="button">Play again</button>
+    <button class="btn ghost" id="btn-menu" type="button">Back to menu</button>
+  </div>
+</div>
+
+<!-- How to play -->
+<div class="overlay" id="howto" hidden>
+  <div class="sheet sheet-scroll" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+    <h2 class="sheet-title" id="howto-title">How to play</h2>
+    <div class="howto">
+      <h3>The goal</h3>
+      <p>Enemies march down the road towards your castle gate. Each one that gets through costs lives (Ogres 2, Siege Giants 5). Lose all 20 and your castle falls. Outlast your opponent.</p>
+      <h3>Build</h3>
+      <p>Tap an empty square to build. Tap a tower to upgrade or sell it. Selling within 4 seconds of building gives all the gold back.</p>
+      <ul class="legend" id="legend-towers"></ul>
+      <h3>Attack</h3>
+      <p>The bar at the bottom sends enemies down your opponent's road. Each send costs gold now and raises your income for the rest of the match. Income pays out every few seconds; the ring next to it shows when.</p>
+      <h3>Know your enemy</h3>
+      <ul class="legend" id="legend-enemies"></ul>
+      <h3>Waves and sudden death</h3>
+      <p>Both players face the same waves at the same moments, and they get tougher over time. Ogres can be sent after a short while and Siege Giants later on. Late in the match sudden death begins: every leak costs double and the waves toughen faster.</p>
+    </div>
+    <button class="btn primary" id="btn-howto-close" type="button">Got it</button>
+  </div>
+</div>
+
+<script type="module" src="src/main.js"></script>
 </body>
 </html>
