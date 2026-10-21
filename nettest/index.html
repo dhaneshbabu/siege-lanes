@@ -1,0 +1,1595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#151a22">
+<meta name="color-scheme" content="dark">
+<title>Siege Lanes Link Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=Grenze+Gotisch:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one narrow column, like a herald's scroll. A crenellated wall line sits under the
+   masthead. Panels are kept for the three things you look at: the code, the phones, the checklist. */
+:root {
+  --night: #151a22;
+  --stone: #1e252f;
+  --stone-2: #28303c;
+  --mortar: #3a4452;
+  --parchment: #ece2cc;
+  --ash: #a3aab5;
+  --brass: #cfa552;
+  --brass-ink: #1c1607;
+  --ok: #6cc08a;
+  --warn: #e7984a;
+  --bad: #ec6d64;
+  --focus: #7cc0ea;
+  /* Heraldic tinctures: one per phone */
+  --t-gules: #c8443c;
+  --t-azure: #3e74c8;
+  --t-vert: #3a9a5c;
+  --t-purpure: #9160bd;
+  --t-tenne: #c97b2f;
+  --t-murrey: #a5426b;
+  --t-celeste: #4f9fd0;
+  --f-display: "Grenze Gotisch", "UnifrakturMaguntia", "Old English Text MT", Georgia, serif;
+  --f-body: "Alegreya Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --r: 12px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; background: var(--night); }
+body {
+  margin: 0;
+  background: var(--night);
+  color: var(--parchment);
+  font: 400 1.0625rem/1.45 var(--f-body);
+  -webkit-tap-highlight-color: transparent;
+}
+[hidden] { display: none !important; }
+
+.wrap {
+  max-width: 30rem;
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Masthead + wall */
+.masthead { padding-top: calc(env(safe-area-inset-top, 0px) + 22px); }
+.eyebrow {
+  margin: 0 0 6px;
+  font: 700 0.8125rem/1 var(--f-body);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+.wordmark {
+  margin: 0;
+  font: 800 clamp(3rem, 15vw, 4.25rem)/0.92 var(--f-display);
+  letter-spacing: 0.005em;
+  color: var(--parchment);
+  text-wrap: balance;
+}
+.wall {
+  height: 18px;
+  margin-top: 16px;
+  background:
+    linear-gradient(var(--stone-2), var(--stone-2)) left bottom / 100% 8px no-repeat,
+    repeating-linear-gradient(90deg, var(--stone-2) 0 22px, transparent 22px 36px) left top / 100% 10px no-repeat;
+}
+
+main.wrap { padding-block: 22px calc(40px + env(safe-area-inset-bottom, 0px)); }
+
+.stack { display: grid; gap: 14px; }
+.lede { margin: 0; color: var(--ash); max-width: 36ch; }
+.fineprint { margin: 0; color: var(--ash); font-size: 0.9375rem; }
+.hint { margin: 0; color: var(--ash); font-size: 0.9375rem; }
+.hint strong, .lede strong { color: var(--parchment); font-weight: 500; }
+
+h2 {
+  margin: 30px 0 10px;
+  font: 700 0.8125rem/1 var(--f-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+/* Fields and buttons */
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font: 700 0.8125rem/1 var(--f-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+input[type="text"] {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid var(--mortar);
+  border-radius: var(--r);
+  background: var(--stone);
+  color: var(--parchment);
+  font: 500 1.0625rem/1 var(--f-body);
+}
+input[type="text"]::placeholder { color: var(--mortar); }
+#code {
+  font: 600 1.625rem/1 var(--f-mono);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  text-align: center;
+  padding-left: calc(14px + 0.35em);
+}
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  border: 1px solid var(--mortar);
+  border-radius: var(--r);
+  background: var(--stone-2);
+  color: var(--parchment);
+  font: 700 1.0625rem/1 var(--f-body);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); }
+.btn.ghost { background: transparent; }
+.btn[disabled] { opacity: 0.5; cursor: default; }
+.btn svg { width: 24px; height: 24px; fill: currentColor; flex: none; }
+.btn.bell {
+  min-height: 66px;
+  font-size: 1.25rem;
+  border: 2px solid var(--brass);
+  background: var(--stone);
+  color: var(--brass);
+}
+.btn.bell svg { width: 28px; height: 28px; }
+.chip-btn {
+  appearance: none;
+  flex: none;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--mortar);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ash);
+  font: 500 0.875rem/1 var(--f-body);
+  cursor: pointer;
+}
+.btn:focus-visible, .chip-btn:focus-visible, input:focus-visible, summary:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.code-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.code-row .btn { width: auto; min-width: 6.5rem; }
+.or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 0;
+  color: var(--ash);
+  font-size: 0.9375rem;
+}
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--mortar); }
+.err { margin: 8px 0 0; color: var(--bad); font-size: 0.9375rem; }
+
+.panel {
+  background: var(--stone);
+  border: 1px solid var(--mortar);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.invite { display: grid; gap: 12px; text-align: center; }
+.invite p { margin: 0; }
+.invite .code-inline { font: 600 1.25rem/1 var(--f-mono); letter-spacing: 0.2em; color: var(--brass); }
+
+/* Session: who am I */
+.me { display: flex; align-items: center; gap: 12px; }
+.me-text { min-width: 0; flex: 1; }
+.me-name { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.me-meta { margin: 2px 0 0; color: var(--ash); font-size: 0.875rem; }
+.shield { width: 26px; height: 30px; flex: none; }
+.shield path { stroke: rgba(236, 226, 204, 0.45); stroke-width: 1.2; }
+
+/* Host code card */
+.codecard { display: grid; justify-items: center; gap: 10px; text-align: center; margin-top: 18px; }
+.codecard .field-label { margin: 0; }
+.bigcode {
+  margin: 0;
+  font: 600 3.5rem/1 var(--f-mono);
+  letter-spacing: 0.18em;
+  padding-left: 0.18em;
+  color: var(--brass);
+  font-variant-numeric: tabular-nums;
+}
+.qr {
+  width: min(232px, 66vw);
+  aspect-ratio: 1;
+  max-width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--parchment);
+}
+.qr svg { display: block; width: 100%; height: 100%; }
+.qr rect { fill: var(--parchment); }
+.qr path { fill: var(--night); }
+.url { font-family: var(--f-mono); font-size: 0.8125rem; color: var(--parchment); overflow-wrap: anywhere; }
+
+/* Guest link state */
+.linkstate { margin-top: 18px; }
+.linkstate .big { margin: 0; font: 700 2rem/1.1 var(--f-body); }
+.linkstate .big.ok { color: var(--ok); }
+.linkstate .big.warn { color: var(--warn); }
+.linkstate .big.bad { color: var(--bad); }
+.linkstate .big.wait { color: var(--parchment); }
+.linkstate .hint { margin-top: 4px; }
+
+/* Roster */
+.roster { list-style: none; margin: 0; padding: 0; }
+.roster li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.roster li + li { border-top: 1px solid var(--mortar); }
+.roster li.empty { display: block; color: var(--ash); padding: 4px 0; }
+.r-name { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.r-tag { font-weight: 500; color: var(--ash); }
+.r-sub { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.r-fig { text-align: right; }
+.r-ms { margin: 0; font: 600 1.375rem/1 var(--f-mono); font-variant-numeric: tabular-nums; }
+.r-ms small { font-size: 0.8125rem; font-weight: 500; color: var(--ash); margin-left: 2px; }
+.r-extra { margin: 4px 0 0; font: 500 0.75rem/1.2 var(--f-mono); color: var(--ash); font-variant-numeric: tabular-nums; }
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font: 700 0.6875rem/1.2 var(--f-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.badge.ok { color: var(--ok); }
+.badge.warn { color: var(--warn); }
+.badge.bad { color: var(--bad); }
+.badge.wait { color: var(--ash); }
+.tinct { font-size: 0.8125rem; color: var(--ash); }
+
+/* Bell */
+.bellbox { display: grid; gap: 8px; margin-top: 22px; }
+#bell-note { min-height: 1.4em; }
+
+/* Checklist */
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.checks li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; }
+.tick {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--mortar);
+  color: var(--ash);
+  font: 600 0.875rem/1 var(--f-mono);
+}
+.tick svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.tick.active { border-color: var(--brass); color: var(--brass); }
+.tick.pass { border-color: var(--ok); background: var(--ok); color: var(--night); }
+.tick.warn { border-color: var(--warn); background: var(--warn); color: var(--night); }
+.tick.fail { border-color: var(--bad); background: var(--bad); color: var(--night); }
+.c-title { margin: 3px 0 0; font-weight: 700; }
+.c-detail { margin: 2px 0 0; color: var(--ash); font-size: 0.9375rem; }
+
+/* Verdict */
+.verdict { margin-top: 22px; display: grid; gap: 6px; }
+.verdict .v-title { margin: 0; font-weight: 700; font-size: 1.125rem; }
+.verdict p { margin: 0; }
+.verdict.ok { border-color: var(--ok); }
+.verdict.ok .v-title { color: var(--ok); }
+.verdict.warn { border-color: var(--warn); }
+.verdict.warn .v-title { color: var(--warn); }
+.verdict.bad { border-color: var(--bad); }
+.verdict.bad .v-title { color: var(--bad); }
+
+.actions { display: grid; gap: 10px; margin-top: 14px; }
+#copy-note { margin: 0; min-height: 1.4em; }
+textarea {
+  width: 100%;
+  min-height: 12rem;
+  padding: 10px;
+  border: 1px solid var(--mortar);
+  border-radius: var(--r);
+  background: var(--stone);
+  color: var(--parchment);
+  font: 500 0.75rem/1.4 var(--f-mono);
+}
+
+details.log { margin-top: 22px; }
+details.log summary {
+  cursor: pointer;
+  color: var(--ash);
+  font: 700 0.8125rem/1 var(--f-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 8px 0;
+}
+.log ol {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  max-height: 16rem;
+  overflow: auto;
+  background: var(--stone);
+  border: 1px solid var(--mortar);
+  border-radius: var(--r);
+  font: 500 0.75rem/1.5 var(--f-mono);
+  color: var(--ash);
+}
+.log li { overflow-wrap: anywhere; }
+
+/* Bell flash */
+.flash {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--parchment);
+  text-align: center;
+  pointer-events: none;
+  animation: flash 1.2s ease-out forwards;
+}
+.flash svg { width: 96px; height: 96px; fill: currentColor; }
+.flash p { margin: 0; font: 700 1.5rem/1.2 var(--f-body); overflow-wrap: anywhere; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+@keyframes flash { 0% { opacity: 0; } 8% { opacity: 0.94; } 70% { opacity: 0.94; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .flash { animation: none; opacity: 0.94; }
+  .btn:active { transform: none; }
+}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Connection test</p>
+    <h1 class="wordmark">Siege Lanes</h1>
+  </div>
+</header>
+<div class="wall" aria-hidden="true"></div>
+
+<main class="wrap">
+  <!-- Home -->
+  <section id="home" class="stack" hidden>
+    <p class="lede">Checks whether phones on your Wi-Fi can link up directly. The game gets built on this, so it needs to work first.</p>
+
+    <div id="invite" class="panel invite" hidden>
+      <p>You were invited to test <span class="code-inline" id="invite-code"></span></p>
+      <button class="btn primary" id="btn-accept" type="button">Join this test</button>
+    </div>
+
+    <div>
+      <label class="field-label" for="name">This phone's name</label>
+      <input type="text" id="name" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false">
+    </div>
+
+    <button class="btn primary" id="btn-host" type="button">Host a test</button>
+
+    <p class="or">or join one</p>
+
+    <form id="join-form" novalidate>
+      <label class="field-label" for="code">Code from the host phone</label>
+      <div class="code-row">
+        <input type="text" id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" inputmode="text" enterkeyhint="go">
+        <button class="btn" type="submit" id="btn-join">Join</button>
+      </div>
+      <p class="err" id="join-error" hidden></p>
+    </form>
+
+    <p class="fineprint">All phones need to be on the same Wi-Fi. Keep this page open on every phone until the test is done.</p>
+  </section>
+
+  <!-- Session -->
+  <section id="session" hidden>
+    <div class="me">
+      <svg class="shield" id="me-shield" viewBox="0 0 24 28" aria-hidden="true"><path d="M2 2h20v10c0 7.5-4.6 11.7-10 14C6.6 23.7 2 19.5 2 12Z"/></svg>
+      <div class="me-text">
+        <p class="me-name" id="me-name"></p>
+        <p class="me-meta" id="me-meta"></p>
+      </div>
+      <button class="chip-btn" id="btn-sound" type="button" aria-pressed="true">Sound on</button>
+    </div>
+
+    <div id="host-card" class="panel codecard" hidden>
+      <p class="field-label">Game code</p>
+      <p class="bigcode" id="big-code"></p>
+      <div class="qr" id="qr" role="img" aria-label="QR code that opens the join link"></div>
+      <p class="hint">Scan this with the other phone's camera, or open <span class="url" id="site-url"></span> there and type the code.</p>
+      <p class="hint" id="host-broker" aria-live="polite"></p>
+    </div>
+
+    <div id="guest-card" class="linkstate" aria-live="polite" hidden>
+      <p class="big wait" id="guest-big">Linking…</p>
+      <p class="hint" id="guest-sub"></p>
+    </div>
+
+    <h2 id="roster-title">Linked phones</h2>
+    <div class="panel"><ul class="roster" id="roster"></ul></div>
+
+    <div class="bellbox">
+      <button class="btn bell" id="btn-bell" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5a1.6 1.6 0 0 1 1.6 1.6v.7A6.2 6.2 0 0 1 18.2 11v3.9l2.1 2.7H3.7l2.1-2.7V11a6.2 6.2 0 0 1 4.6-6.2v-.7A1.6 1.6 0 0 1 12 2.5Z"/><circle cx="12" cy="20" r="2.1"/></svg>
+        Ring the bell
+      </button>
+      <p class="hint" id="bell-note" aria-live="polite"></p>
+    </div>
+
+    <h2>Checklist</h2>
+    <ol class="checks" id="checks"></ol>
+
+    <div class="panel verdict" id="verdict">
+      <p class="v-title" id="v-title"></p>
+      <p class="hint" id="v-body"></p>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="btn-copy" type="button">Copy results</button>
+      <p class="hint" id="copy-note" aria-live="polite"></p>
+      <textarea id="report-fallback" readonly hidden aria-label="Test results"></textarea>
+      <button class="btn ghost" id="btn-leave" type="button">Leave test</button>
+    </div>
+
+    <details class="log" id="log-box">
+      <summary>Event log</summary>
+      <ol id="log"></ol>
+    </details>
+  </section>
+</main>
+
+<div class="flash" id="flash" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5a1.6 1.6 0 0 1 1.6 1.6v.7A6.2 6.2 0 0 1 18.2 11v3.9l2.1 2.7H3.7l2.1-2.7V11a6.2 6.2 0 0 1 4.6-6.2v-.7A1.6 1.6 0 0 1 12 2.5Z"/><circle cx="12" cy="20" r="2.1"/></svg>
+  <p id="flash-text"></p>
+</div>
+
+<script src="../vendor/peerjs-1.5.5.min.js"></script>
+<script src="../vendor/qrcode-1.4.4.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- constants ----------
+  const PREFIX = 'siegelanes-t1-';            // namespaces our ids on the shared matchmaker
+  const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // no I or O, so codes are easy to read aloud
+  const TINCTURES = [
+    { key: 'gules',   name: 'Gules',   plain: 'red' },
+    { key: 'azure',   name: 'Azure',   plain: 'blue' },
+    { key: 'vert',    name: 'Vert',    plain: 'green' },
+    { key: 'purpure', name: 'Purpure', plain: 'purple' },
+    { key: 'tenne',   name: 'Tenné',   plain: 'orange' },
+    { key: 'murrey',  name: 'Murrey',  plain: 'mulberry' },
+    { key: 'celeste', name: 'Celeste', plain: 'sky blue' },
+  ];
+  const MAX_GUESTS = 6;
+  const PING_MS = 1000;
+  const STALE_MS = 4000;          // no message for this long: "not responding"
+  const DROP_MS = 9000;           // guest gives up on a silent link and relinks
+  const CONNECT_TIMEOUT_MS = 15000;
+  const LOCK_MIN_MS = 8000;       // hidden at least this long counts as a lock test
+  const LOCK_WINDOW_MS = 25000;   // must hear the other phone again within this
+  const DELAY_OK_MS = 80;
+  const MIN_SAMPLES = 10;
+  const RTT_KEEP = 60;
+
+  const params = new URLSearchParams(location.search);
+  const $ = (id) => document.getElementById(id);
+
+  const store = {
+    get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* storage blocked */ } },
+    del(k) { try { sessionStorage.removeItem(k); } catch { /* storage blocked */ } },
+    lget(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    lset(k, v) { try { localStorage.setItem(k, v); } catch { /* storage blocked */ } },
+  };
+
+  // ---------- helpers ----------
+  function randomCode() {
+    const a = new Uint32Array(4);
+    crypto.getRandomValues(a);
+    return Array.from(a, (n) => ALPHA[n % ALPHA.length]).join('');
+  }
+  function randomId(len) {
+    const a = new Uint32Array(len);
+    crypto.getRandomValues(a);
+    return Array.from(a, (n) => 'abcdefghijkmnpqrstuvwxyz23456789'[n % 32]).join('');
+  }
+  function cleanText(v, max) {
+    if (typeof v !== 'string') return '';
+    return v.replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁩﻿]/g, '').trim().slice(0, max);
+  }
+  function cleanId(v) { return typeof v === 'string' && /^[a-z0-9]{6,24}$/.test(v) ? v : ''; }
+  function validColor(c) { return Number.isInteger(c) && c >= 0 && c < TINCTURES.length ? c : null; }
+  function tinct(c) { return c == null ? null : TINCTURES[c]; }
+  function normCode(v) { return String(v || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); }
+  const now = () => Date.now();
+
+  function deviceInfo() {
+    const ua = navigator.userAgent;
+    let dev = 'Phone', os = 'unknown OS', br = 'browser';
+    const ios = ua.match(/(iPhone|iPad|iPod).*? OS (\d+)[_.](\d+)/);
+    if (ios) { dev = ios[1]; os = `iOS ${ios[2]}.${ios[3]}`; }
+    else if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) { dev = 'iPad'; os = 'iPadOS'; }
+    else if (/Android/.test(ua)) { dev = 'Android'; const m = ua.match(/Android (\d+(?:\.\d+)?)/); os = m ? `Android ${m[1]}` : 'Android'; }
+    else if (/Mac OS X/.test(ua)) { dev = 'Mac'; os = 'macOS'; }
+    else if (/Windows/.test(ua)) { dev = 'PC'; os = 'Windows'; }
+    else if (/Linux/.test(ua)) { dev = 'Computer'; os = 'Linux'; }
+    let m;
+    if ((m = ua.match(/EdgiOS\/(\d+)|EdgA\/(\d+)|Edg\/(\d+)/))) br = `Edge ${m[1] || m[2] || m[3]}`;
+    else if ((m = ua.match(/CriOS\/(\d+)/))) br = `Chrome ${m[1]}`;
+    else if ((m = ua.match(/FxiOS\/(\d+)|Firefox\/(\d+)/))) br = `Firefox ${m[1] || m[2]}`;
+    else if ((m = ua.match(/SamsungBrowser\/(\d+)/))) br = `Samsung Internet ${m[1]}`;
+    else if ((m = ua.match(/Chrome\/(\d+)/))) br = `Chrome ${m[1]}`;
+    else if ((m = ua.match(/Version\/(\d+(?:\.\d+)?).*Safari/))) br = `Safari ${m[1]}`;
+    return { dev, line: `${os}, ${br}` };
+  }
+
+  // ---------- state ----------
+  const DEVICE = deviceInfo();
+  const S = {
+    role: null,           // 'host' | 'guest'
+    code: '',
+    name: '',
+    cid: store.get('sl.cid') || '',
+    color: null,          // my tincture index
+    peer: null,
+    broker: 'idle',       // idle | connecting | online | offline
+    brokerTimer: null,
+    brokerPending: false,
+    idRetries: 0,
+    reTimer: null,
+    rePending: false,
+    hostMissing: false,
+    fatal: '',
+    links: new Map(),     // host: cid -> link; guest: 'host' -> link
+    roster: null,         // guest: last roster from host
+    myBells: new Map(),   // bell id -> performance.now() when rung
+    bellOut: false,
+    bellIn: false,
+    bellNote: '',
+    lock: { state: 'idle' }, // idle | waiting | pass | fail
+    hiddenAt: 0,
+    visibleAt: 0,
+    linkedWhenHidden: false,
+    wake: 'off',
+    wakeLock: null,
+    sound: store.lget('sl.sound') !== 'off',
+    log: [],
+  };
+  if (!S.cid) { S.cid = randomId(12); store.set('sl.cid', S.cid); }
+
+  function newLink(key) {
+    return {
+      key, conn: null, name: '', color: null, dev: '',
+      state: 'connecting', attempts: 0,
+      rtts: [], samples: 0, seq: 0,
+      lastHeard: 0, openedAt: 0, closedAt: 0, everOpen: false, reconnects: 0,
+      type: null, lc: null, rc: null, proto: null, localKinds: '',
+      bellMs: null,
+    };
+  }
+
+  // ---------- log ----------
+  function log(msg) {
+    const t = new Date().toTimeString().slice(0, 8);
+    S.log.unshift(`${t}  ${msg}`);
+    if (S.log.length > 200) S.log.length = 200;
+    renderLog();
+  }
+
+  // ---------- matchmaker (PeerJS signalling server) ----------
+  function peerOpts() {
+    const o = { debug: 1 };
+    const sv = params.get('server');           // for local testing: ?server=localhost:9000&insecure=1
+    if (sv) {
+      const [host, port] = sv.split(':');
+      o.host = host;
+      o.port = Number(port) || 9000;
+      o.path = '/';
+      o.secure = !params.has('insecure');
+    }
+    return o;
+  }
+
+  function makePeer() {
+    if (typeof Peer !== 'function') { S.fatal = 'The networking code did not load. Reload the page.'; render(); return; }
+    S.broker = 'connecting';
+    const p = S.role === 'host' ? new Peer(PREFIX + S.code, peerOpts()) : new Peer(peerOpts());
+    S.peer = p;
+    p.on('open', () => {
+      if (S.peer !== p) return;
+      S.broker = 'online';
+      S.idRetries = 0;
+      log(S.role === 'host' ? `Matchmaker online. Code ${S.code} is registered.` : 'Matchmaker online.');
+      if (S.role === 'guest') connectHost();
+      render();
+    });
+    p.on('connection', (conn) => {
+      if (S.peer !== p) return;
+      if (S.role === 'host') hostAccept(conn);
+      else { try { conn.close(); } catch { /* ignore */ } }
+    });
+    p.on('disconnected', () => {
+      if (S.peer !== p) return;
+      S.broker = 'offline';
+      log('Lost the matchmaker. Retrying.');
+      scheduleBroker(1500);
+      render();
+    });
+    p.on('close', () => { if (S.peer === p) S.broker = 'offline'; });
+    p.on('error', (err) => onPeerError(p, err));
+  }
+
+  function scheduleBroker(delay) {
+    if (S.brokerTimer || !S.role) return;
+    S.brokerTimer = setTimeout(brokerKick, delay);
+  }
+  function brokerKick() {
+    S.brokerTimer = null;
+    if (!S.role || S.fatal) return;
+    if (document.hidden) { S.brokerPending = true; return; }
+    let p = S.peer;
+    if (p && p.destroyed) { S.peer = null; p = null; }
+    if (!p) { makePeer(); return; }
+    if (p.disconnected) {
+      S.broker = 'connecting';
+      try { p.reconnect(); }
+      catch (e) { S.peer = null; try { p.destroy(); } catch { /* ignore */ } makePeer(); }
+    }
+  }
+
+  function onPeerError(p, err) {
+    if (S.peer !== p) return;
+    const type = (err && err.type) || 'unknown';
+    switch (type) {
+      case 'unavailable-id':
+        S.idRetries += 1;
+        if (S.idRetries > 10) {
+          S.fatal = `The matchmaker is still holding code ${S.code}. Leave this test and host a new one.`;
+          log('Gave up re-registering the code.');
+        } else {
+          log(`Code ${S.code} is still registered from before. Trying again (${S.idRetries}).`);
+          scheduleBroker(2500);
+        }
+        break;
+      case 'peer-unavailable': {
+        S.hostMissing = true;
+        const link = S.links.get('host');
+        log(`No host phone is online with code ${S.code}.`);
+        if (link && link.state === 'connecting') { dropConn(link, 'host not found'); scheduleReconnect(3000); }
+        break;
+      }
+      case 'browser-incompatible':
+        S.fatal = 'This browser cannot open direct links (WebRTC). Try Safari on iPhone or Chrome on Android.';
+        break;
+      case 'network': case 'server-error': case 'socket-error': case 'socket-closed': case 'ssl-unavailable':
+        S.broker = 'offline';
+        log(`Matchmaker problem (${type}).`);
+        scheduleBroker(3000);
+        break;
+      default:
+        log(`Error: ${type}${err && err.message ? ' – ' + err.message : ''}`);
+    }
+    // PeerJS destroys the peer itself after some errors; start a fresh one when that happens.
+    queueMicrotask(() => {
+      if (S.peer === p && p.destroyed) { S.peer = null; scheduleBroker(2500); }
+    });
+    render();
+  }
+
+  // ---------- host side ----------
+  function nextColor() {
+    const used = new Set([S.color]);
+    for (const l of S.links.values()) used.add(l.color);
+    for (let i = 0; i < TINCTURES.length; i++) if (!used.has(i)) return i;
+    return S.links.size % TINCTURES.length;
+  }
+  function linkForConn(conn) {
+    for (const l of S.links.values()) if (l.conn === conn) return l;
+    return null;
+  }
+
+  function hostAccept(conn) {
+    let greeted = false;
+    const watchdog = setTimeout(() => {
+      if (!greeted) { log('A phone started linking but never finished.'); try { conn.close(); } catch { /* ignore */ } }
+    }, CONNECT_TIMEOUT_MS);
+    watchIce(conn, () => linkForConn(conn));
+    conn.on('data', (msg) => {
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.t === 'hello') { greeted = true; clearTimeout(watchdog); hostHello(conn, msg); return; }
+      const link = linkForConn(conn);
+      if (link) onData(link, msg);
+    });
+    conn.on('close', () => {
+      clearTimeout(watchdog);
+      const link = linkForConn(conn);
+      if (link) setClosed(link, 'link closed');
+    });
+    conn.on('error', (e) => log(`Link error: ${(e && (e.type || e.message)) || e}`));
+  }
+
+  function hostHello(conn, msg) {
+    const cid = cleanId(msg.cid);
+    if (!cid) { try { conn.close(); } catch { /* ignore */ } return; }
+    const name = cleanText(msg.name, 16) || 'Phone';
+    let link = S.links.get(cid);
+    if (link) {
+      if (link.conn && link.conn !== conn) { const old = link.conn; link.conn = null; try { old.close(); } catch { /* ignore */ } }
+      link.reconnects += 1;
+      log(`${name} relinked.`);
+    } else {
+      const active = [...S.links.values()].filter((l) => l.state !== 'closed').length;
+      if (active >= MAX_GUESTS) {
+        try { conn.send({ t: 'full' }); } catch { /* ignore */ }
+        setTimeout(() => { try { conn.close(); } catch { /* ignore */ } }, 400);
+        return;
+      }
+      link = newLink(cid);
+      link.color = nextColor();
+      S.links.set(cid, link);
+      log(`${name} joined.`);
+    }
+    link.conn = conn;
+    link.name = name;
+    link.dev = cleanText(msg.dev, 60);
+    markOpen(link);
+    safeSend(link, { t: 'welcome', v: 1, color: link.color, code: S.code, host: { name: S.name, color: S.color, dev: DEVICE.line } });
+    broadcastRoster();
+    render();
+  }
+
+  function broadcastRoster() {
+    if (S.role !== 'host') return;
+    const list = [...S.links.values()].map((l) => {
+      const d = delayStats(l);
+      return { cid: l.key, name: l.name, color: l.color, state: l.state, type: l.type, lc: l.lc, rc: l.rc,
+               med: d ? Math.round(d.med) : null, worst: d ? Math.round(d.worst) : null, re: l.reconnects };
+    });
+    const msg = { t: 'roster', host: { name: S.name, color: S.color }, list };
+    for (const l of S.links.values()) safeSend(l, msg);
+  }
+
+  function hostRing(fromLink, id) {
+    const who = fromLink
+      ? { cid: fromLink.key, name: fromLink.name, color: fromLink.color }
+      : { cid: 'host', name: S.name, color: S.color };
+    const msg = { t: 'rang', id, ...who };
+    for (const l of S.links.values()) safeSend(l, msg);
+    if (fromLink) { S.bellIn = true; showBell(who.name, who.color, false); }
+    else showBell(S.name, S.color, true);
+  }
+
+  // ---------- guest side ----------
+  function connectHost() {
+    if (S.role !== 'guest' || S.fatal) return;
+    const p = S.peer;
+    if (!p || p.destroyed || p.disconnected || !p.open) { scheduleBroker(500); return; }
+    let link = S.links.get('host');
+    if (!link) { link = newLink('host'); S.links.set('host', link); }
+    if (link.conn && link.state !== 'closed') return;
+    link.attempts += 1;
+    link.state = 'connecting';
+    log(link.everOpen ? `Relinking to the host (try ${link.attempts}).` : `Linking to the host (try ${link.attempts}).`);
+    let conn;
+    try { conn = p.connect(PREFIX + S.code, { reliable: true, serialization: 'json', metadata: { cid: S.cid } }); }
+    catch (e) { log(`Could not start a link: ${e.message}`); }
+    if (!conn) { link.state = 'closed'; scheduleReconnect(2000); return; }
+    link.conn = conn;
+    watchIce(conn, () => link);
+    const watchdog = setTimeout(() => {
+      if (link.conn === conn && link.state === 'connecting') {
+        log('Link attempt timed out after 15 s.');
+        dropConn(link, 'timed out');
+        scheduleReconnect(1000);
+      }
+    }, CONNECT_TIMEOUT_MS);
+    conn.on('open', () => {
+      if (link.conn !== conn) return;
+      safeSend(link, { t: 'hello', v: 1, cid: S.cid, name: S.name, dev: DEVICE.line });
+    });
+    conn.on('data', (msg) => {
+      if (link.conn !== conn || !msg || typeof msg !== 'object') return;
+      if (msg.t === 'welcome') {
+        clearTimeout(watchdog);
+        const first = !link.everOpen;
+        const c = validColor(msg.color);
+        if (c != null) S.color = c;
+        const h = msg.host || {};
+        link.name = cleanText(h.name, 16) || 'Host';
+        link.color = validColor(h.color);
+        link.dev = cleanText(h.dev, 60);
+        if (!first) link.reconnects += 1;
+        S.hostMissing = false;
+        markOpen(link);
+        log(first ? `Linked to ${link.name}.` : `Relinked to ${link.name}.`);
+        render();
+        return;
+      }
+      onData(link, msg);
+    });
+    conn.on('close', () => {
+      clearTimeout(watchdog);
+      if (link.conn === conn) setClosed(link, 'link closed');
+    });
+    conn.on('error', (e) => log(`Link error: ${(e && (e.type || e.message)) || e}`));
+  }
+
+  function scheduleReconnect(delay = 1500) {
+    if (S.role !== 'guest' || S.reTimer || S.fatal) return;
+    S.reTimer = setTimeout(() => {
+      S.reTimer = null;
+      if (document.hidden) { S.rePending = true; return; }
+      connectHost();
+    }, delay);
+  }
+
+  // ---------- shared link handling ----------
+  function safeSend(link, m) {
+    try { if (link.conn && link.conn.open) link.conn.send(m); } catch { /* channel closing */ }
+  }
+  function markOpen(link) {
+    const t = now();
+    link.state = 'open';
+    link.lastHeard = t;
+    link.openedAt = t;
+    link.everOpen = true;
+  }
+  function setClosed(link, why) {
+    if (link.state === 'closed') return;
+    link.state = 'closed';
+    link.closedAt = now();
+    link.conn = null;
+    log(`${link.name || 'Host'}: ${why}.`);
+    if (S.role === 'guest') scheduleReconnect(1500);
+    else broadcastRoster();
+    render();
+  }
+  function dropConn(link, why) {
+    const c = link.conn;
+    link.conn = null;
+    link.state = 'closed';
+    link.closedAt = now();
+    try { if (c) c.close(); } catch { /* ignore */ }
+    log(`Link dropped: ${why}.`);
+  }
+
+  function onData(link, msg) {
+    const t = now();
+    if (S.lock.state === 'waiting' && !S.lock.heardAt && t > S.lock.back) S.lock.heardAt = t;
+    link.lastHeard = t;
+    if (link.state === 'stale') { link.state = 'open'; log(`${link.name || 'Host'} is responding again.`); }
+    switch (msg.t) {
+      case 'ping':
+        safeSend(link, { t: 'pong', s: msg.s, ts: msg.ts });
+        break;
+      case 'pong': {
+        if (typeof msg.ts !== 'number') break;
+        const rtt = performance.now() - msg.ts;
+        if (rtt >= 0 && rtt < 60000) {
+          link.rtts.push(rtt);
+          if (link.rtts.length > RTT_KEEP) link.rtts.shift();
+          link.samples += 1;
+        }
+        break;
+      }
+      case 'bell':
+        if (S.role === 'host' && typeof msg.id === 'string') hostRing(link, msg.id.slice(0, 16));
+        break;
+      case 'rang': {
+        if (S.role !== 'guest' || typeof msg.id !== 'string') break;
+        const sent = S.myBells.get(msg.id);
+        if (sent != null) {
+          S.myBells.delete(msg.id);
+          S.bellOut = true;
+          S.bellNote = `Your bell reached the host and came back in ${Math.round(performance.now() - sent)} ms.`;
+          showBell(S.name, S.color, true);
+        } else {
+          S.bellIn = true;
+          safeSend(link, { t: 'heard', id: msg.id });
+          showBell(cleanText(msg.name, 16) || 'Someone', validColor(msg.color), false);
+        }
+        render();
+        break;
+      }
+      case 'heard': {
+        if (S.role !== 'host' || typeof msg.id !== 'string') break;
+        const sent = S.myBells.get(msg.id);
+        if (sent != null) {
+          const ms = Math.round(performance.now() - sent);
+          S.bellOut = true;
+          link.bellMs = ms;
+          const heard = [...S.links.values()].filter((l) => l.bellMs != null).map((l) => `${l.name} in ${l.bellMs} ms`);
+          S.bellNote = `Heard by ${heard.join(', ')}.`;
+          render();
+        }
+        break;
+      }
+      case 'roster':
+        if (S.role === 'guest' && Array.isArray(msg.list)) S.roster = msg;
+        break;
+      case 'full':
+        S.fatal = `That test already has ${MAX_GUESTS} phones, the most it allows.`;
+        render();
+        break;
+      default:
+        break;
+    }
+  }
+
+  function watchIce(conn, getLink) {
+    const pc = conn.peerConnection;
+    if (!pc || !pc.addEventListener) return;
+    pc.addEventListener('iceconnectionstatechange', () => {
+      const l = getLink();
+      log(`${(l && l.name) || 'New phone'}: network path ${pc.iceConnectionState}.`);
+    });
+  }
+
+  function delayStats(link) {
+    if (!link.rtts.length) return null;
+    const s = [...link.rtts].sort((a, b) => a - b);
+    return { med: s[Math.floor(s.length / 2)], worst: s[s.length - 1], n: link.samples };
+  }
+
+  function typeOf(lc, rc) {
+    if (!lc || !rc) return null;
+    return lc === 'relay' || rc === 'relay' ? 'relay' : 'direct';
+  }
+  function routeLabel(type, lc, rc) {
+    if (type === 'relay') return 'Relayed via internet';
+    if (type === 'direct') return lc === 'host' && rc === 'host' ? 'Direct on Wi-Fi' : 'Direct via router';
+    return 'Checking route';
+  }
+
+  // ---------- timers ----------
+  function pingTick() {
+    if (!S.role || document.hidden) return;
+    for (const l of S.links.values()) {
+      if (l.state === 'open' || l.state === 'stale') {
+        l.seq += 1;
+        safeSend(l, { t: 'ping', s: l.seq, ts: performance.now() });
+      }
+    }
+  }
+
+  function watchTick() {
+    if (!S.role) return;
+    const t = now();
+    // Right after the screen comes back, give buffered messages a moment to arrive before judging links.
+    const settling = t - S.visibleAt < 3000;
+    for (const l of S.links.values()) {
+      if (l.state !== 'open' && l.state !== 'stale') continue;
+      if (settling || document.hidden) continue;
+      const silent = t - l.lastHeard;
+      if (l.state === 'open' && silent > STALE_MS) {
+        l.state = 'stale';
+        log(`${l.name || 'Host'} stopped responding.`);
+      }
+      if (S.role === 'guest' && silent > DROP_MS) {
+        log('No reply from the host for 9 s. Relinking.');
+        dropConn(l, 'host went quiet');
+        scheduleReconnect(500);
+      }
+    }
+    if (S.lock.state === 'waiting') {
+      if (S.lock.heardAt) {
+        S.lock = { state: 'pass', secs: (S.lock.heardAt - S.lock.back) / 1000, away: S.lock.away };
+        log(`Lock test passed: heard the other phone ${S.lock.secs.toFixed(1)} s after unlocking.`);
+      } else if (t - S.lock.back > LOCK_WINDOW_MS) {
+        S.lock = { state: 'fail', away: S.lock.away };
+        log('Lock test failed: nothing from the other phone within 25 s of unlocking.');
+      }
+    }
+    for (const [id, ts] of S.myBells) if (performance.now() - ts > 15000) S.myBells.delete(id);
+    render();
+  }
+
+  async function statsTick() {
+    if (!S.role || document.hidden) return;
+    for (const link of S.links.values()) {
+      const pc = link.conn && link.conn.peerConnection;
+      if (!pc || link.state === 'closed' || typeof pc.getStats !== 'function') continue;
+      try {
+        const st = await pc.getStats();
+        let pair = null;
+        const kinds = {};
+        st.forEach((r) => {
+          if (r.type === 'transport' && r.selectedCandidatePairId && !pair) pair = st.get(r.selectedCandidatePairId) || null;
+          if (r.type === 'local-candidate') kinds[r.candidateType] = (kinds[r.candidateType] || 0) + 1;
+        });
+        if (!pair) st.forEach((r) => { if (!pair && r.type === 'candidate-pair' && (r.selected || (r.nominated && r.state === 'succeeded'))) pair = r; });
+        if (!pair) st.forEach((r) => { if (!pair && r.type === 'candidate-pair' && r.state === 'succeeded') pair = r; });
+        link.localKinds = Object.entries(kinds).map(([k, v]) => `${k} ${v}`).join(', ');
+        if (pair) {
+          const lc = st.get(pair.localCandidateId);
+          const rc = st.get(pair.remoteCandidateId);
+          link.lc = (lc && lc.candidateType) || null;
+          link.rc = (rc && rc.candidateType) || null;
+          link.proto = (lc && (lc.relayProtocol || lc.protocol)) || null;
+          const before = link.type;
+          link.type = typeOf(link.lc, link.rc);
+          if (link.type && link.type !== before) {
+            log(`${link.name || 'Host'}: ${routeLabel(link.type, link.lc, link.rc)} (${link.lc} to ${link.rc}, ${link.proto || '?'}).`);
+          }
+        }
+      } catch { /* stats not ready */ }
+    }
+    broadcastRoster();
+    render();
+  }
+
+  // ---------- wake lock, sound, bell ----------
+  async function keepAwake() {
+    if (!('wakeLock' in navigator)) { S.wake = 'unsupported'; return; }
+    if (S.wakeLock && !S.wakeLock.released) return;
+    try {
+      const lock = await navigator.wakeLock.request('screen');
+      S.wakeLock = lock;
+      S.wake = 'on';
+      lock.addEventListener('release', () => { S.wake = 'off'; render(); });
+    } catch { S.wake = 'blocked'; }
+    render();
+  }
+
+  let actx = null;
+  function primeAudio() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended') actx.resume();
+    } catch { /* audio unavailable */ }
+  }
+  function bellSound() {
+    if (!S.sound || !actx || actx.state !== 'running') return;
+    const t0 = actx.currentTime;
+    const out = actx.createGain();
+    out.gain.value = 0.22;
+    out.connect(actx.destination);
+    // Partials loosely after a tuned bell: hum, prime, tierce, quint, nominal.
+    [[0.5, 0.35, 2.4], [1, 1, 1.8], [1.2, 0.45, 1.3], [1.5, 0.3, 1.0], [2, 0.5, 0.8], [2.74, 0.18, 0.5]].forEach(([ratio, amp, dur]) => {
+      const o = actx.createOscillator();
+      const g = actx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 587 * ratio;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(amp, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g).connect(out);
+      o.start(t0);
+      o.stop(t0 + dur + 0.05);
+    });
+  }
+
+  let flashTimer = null;
+  function showBell(name, color, mine) {
+    const el = $('flash');
+    const tc = tinct(color);
+    el.style.background = tc ? `var(--t-${tc.key})` : 'var(--stone-2)';
+    $('flash-text').textContent = mine ? 'You rang the bell' : `${name} rang the bell`;
+    el.hidden = false;
+    // restart the animation
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => { el.hidden = true; }, 1250);
+    bellSound();
+    try { if (navigator.vibrate) navigator.vibrate(70); } catch { /* not allowed */ }
+  }
+
+  function ringBell() {
+    primeAudio();
+    const id = randomId(10);
+    if (S.role === 'host') {
+      if (![...S.links.values()].some((l) => l.state === 'open')) {
+        S.bellNote = 'No phone is linked yet, so nobody will hear it.';
+      } else {
+        S.bellNote = 'Ringing…';
+        for (const l of S.links.values()) l.bellMs = null;
+      }
+      S.myBells.set(id, performance.now());
+      hostRing(null, id);
+    } else {
+      const link = S.links.get('host');
+      if (!link || (link.state !== 'open' && link.state !== 'stale')) {
+        S.bellNote = 'Not linked to the host yet.';
+      } else {
+        S.myBells.set(id, performance.now());
+        safeSend(link, { t: 'bell', id });
+        S.bellNote = 'Ringing…';
+      }
+    }
+    render();
+  }
+
+  // ---------- checks & verdict ----------
+  function liveLinks() { return [...S.links.values()].filter((l) => l.state === 'open' || l.state === 'stale'); }
+
+  function computeChecks() {
+    const live = liveLinks();
+    const out = [];
+
+    // 1. Phones link up
+    let c1;
+    if (S.fatal) c1 = { s: 'fail', d: S.fatal };
+    else if (live.length) c1 = { s: 'pass', d: S.role === 'host' ? `${live.length} phone${live.length > 1 ? 's' : ''} linked to this one.` : `Linked to ${live[0].name}.` };
+    else if (S.role === 'guest') {
+      const l = S.links.get('host');
+      if (l && !l.everOpen && l.attempts >= 3) c1 = { s: 'fail', d: `Could not link after ${l.attempts} tries. Keep the page open on both phones; it keeps trying.` };
+      else c1 = { s: 'active', d: 'Linking to the host phone…' };
+    } else c1 = { s: 'active', d: 'Waiting for another phone to join with the code above.' };
+    out.push({ title: 'Phones link up', ...c1 });
+
+    // 2. Route is direct
+    let c2;
+    const typed = live.filter((l) => l.type);
+    if (!live.length) c2 = { s: 'idle', d: 'Shows how the phones reach each other once they are linked.' };
+    else if (typed.some((l) => l.type === 'relay')) c2 = { s: 'warn', d: 'Traffic goes through an internet relay server instead of straight across your Wi-Fi. It works, but it is slower and depends on a free service.' };
+    else if (typed.length === live.length) c2 = { s: 'pass', d: typed.map((l) => `${l.name || 'Host'}: ${routeLabel(l.type, l.lc, l.rc)}`).join(' · ') };
+    else c2 = { s: 'active', d: 'Checking the route…' };
+    out.push({ title: 'Link is direct', ...c2 });
+
+    // 3. Delay
+    let c3;
+    const measured = live.map((l) => ({ l, d: delayStats(l) })).filter((x) => x.d && x.d.n >= MIN_SAMPLES);
+    if (!live.length) c3 = { s: 'idle', d: `Round trip should stay under ${DELAY_OK_MS} ms.` };
+    else if (measured.length < live.length) {
+      const got = Math.min(...live.map((l) => l.samples));
+      c3 = { s: 'active', d: `Measuring… ${Math.min(got, MIN_SAMPLES)} of ${MIN_SAMPLES} pings.` };
+    } else {
+      const worstMed = Math.max(...measured.map((x) => x.d.med));
+      const txt = measured.map((x) => `${x.l.name || 'Host'} ${Math.round(x.d.med)} ms`).join(' · ');
+      c3 = worstMed < DELAY_OK_MS
+        ? { s: 'pass', d: `Typical round trip: ${txt}.` }
+        : { s: 'warn', d: `Typical round trip: ${txt}. Playable for this game, but slower than a direct Wi-Fi link should be.` };
+    }
+    out.push({ title: `Delay under ${DELAY_OK_MS} ms`, ...c3 });
+
+    // 4. Bell both ways
+    let c4;
+    if (S.bellOut && S.bellIn) c4 = { s: 'pass', d: 'This phone rang and was heard, and heard the other phone ring.' };
+    else if (!live.length) c4 = { s: 'idle', d: 'Ring the bell on each phone. The other phone should flash and chime.' };
+    else {
+      const parts = [S.bellOut ? 'Your ring was heard.' : 'Ring the bell on this phone.', S.bellIn ? 'You heard the other phone.' : 'Then ring it on the other phone.'];
+      c4 = { s: 'active', d: parts.join(' ') };
+    }
+    out.push({ title: 'Bell rings both ways', ...c4 });
+
+    // 5. Lock survival
+    let c5;
+    if (S.lock.state === 'pass') c5 = { s: 'pass', d: `After ${Math.round(S.lock.away / 1000)} s locked, the link was back ${S.lock.secs.toFixed(1)} s after unlocking.` };
+    else if (S.lock.state === 'fail') c5 = { s: 'fail', d: 'The link did not come back within 25 s of unlocking. Try once more. If it fails again, copy the results and share them.' };
+    else if (S.lock.state === 'waiting') c5 = { s: 'active', d: 'Unlocked. Waiting to hear the other phone again…' };
+    else if (!live.length) c5 = { s: 'idle', d: 'Lock this phone for about 10 seconds once it is linked.' };
+    else c5 = { s: 'active', d: 'Press the side button to lock this phone, wait about 10 seconds, then unlock it.' };
+    out.push({ title: 'Survives a screen lock', ...c5 });
+
+    return out;
+  }
+
+  function verdictFor(checks) {
+    const states = checks.map((c) => c.s);
+    const done = states.filter((s) => s === 'pass' || s === 'warn' || s === 'fail').length;
+    if (S.fatal) return { cls: 'bad', title: 'This phone cannot run the test', body: S.fatal };
+    if (states.includes('fail')) return { cls: 'bad', title: 'Something did not work', body: 'Copy the results and share them. The fallback is a small server on a computer on the same Wi-Fi.' };
+    if (done === checks.length && states.includes('warn')) return { cls: 'warn', title: 'It works, with a catch', body: 'The phones link up, but not as directly or as fast as hoped. Copy the results and share them.' };
+    if (done === checks.length) return { cls: 'ok', title: 'Ready for the game', body: 'Direct link, low delay, and it recovers from a screen lock. Copy the results and share them.' };
+    return { cls: '', title: `${done} of ${checks.length} checks done`, body: 'Work down the list on both phones. Each phone shows its own results.' };
+  }
+
+  // ---------- report ----------
+  function report() {
+    const checks = computeChecks();
+    const sym = { pass: 'PASS', warn: 'WARN', fail: 'FAIL', active: 'not done', idle: 'not done' };
+    const L = [];
+    L.push('Siege Lanes connection test (t1)');
+    L.push(`Time: ${new Date().toLocaleString()}`);
+    L.push(`This phone: ${S.name} (${S.role}), ${DEVICE.line}, banner ${tinct(S.color) ? tinct(S.color).name : '?'}`);
+    L.push(`Code: ${S.code}   Matchmaker: ${S.broker}   Screen wake lock: ${S.wake}`);
+    L.push('Links:');
+    if (!S.links.size) L.push('  (none)');
+    for (const l of S.links.values()) {
+      const d = delayStats(l);
+      L.push(`  - ${l.name || 'Host'}${l.dev ? ' [' + l.dev + ']' : ''}: ${l.state}, ${l.type || 'route unknown'} (local ${l.lc || '?'} / remote ${l.rc || '?'}, ${l.proto || '?'}), ` +
+        `delay median ${d ? Math.round(d.med) : '?'} ms, worst ${d ? Math.round(d.worst) : '?'} ms, ${l.samples} pings, ${l.reconnects} relinks, ` +
+        `${l.attempts ? l.attempts + ' tries, ' : ''}candidates: ${l.localKinds || '?'}`);
+    }
+    L.push('Checks:');
+    checks.forEach((c, i) => L.push(`  ${i + 1}. ${c.title}: ${sym[c.s]} (${c.d})`));
+    L.push('Recent events (newest first):');
+    S.log.slice(0, 40).forEach((x) => L.push(`  ${x}`));
+    return L.join('\n');
+  }
+
+  // ---------- rendering ----------
+  function shieldEl(color) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 28');
+    svg.setAttribute('class', 'shield');
+    svg.setAttribute('aria-hidden', 'true');
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', 'M2 2h20v10c0 7.5-4.6 11.7-10 14C6.6 23.7 2 19.5 2 12Z');
+    const tc = tinct(color);
+    path.style.fill = tc ? `var(--t-${tc.key})` : 'var(--mortar)';
+    svg.appendChild(path);
+    return svg;
+  }
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function stateBadge(state, type, lc, rc) {
+    if (state === 'closed') return ['bad', 'Disconnected'];
+    if (state === 'stale') return ['warn', 'Not responding'];
+    if (state === 'connecting') return ['wait', 'Linking'];
+    if (type === 'relay') return ['warn', 'Relayed'];
+    if (type === 'direct') return ['ok', routeLabel(type, lc, rc)];
+    return ['wait', 'Checking route'];
+  }
+  function rosterRow({ name, color, tag, state, type, lc, rc, med, worst, re, since }) {
+    const li = document.createElement('li');
+    li.appendChild(shieldEl(color));
+    const mid = el('div');
+    const nm = el('p', 'r-name', name || 'Phone');
+    if (tag) { nm.append(' '); nm.appendChild(el('span', 'r-tag', tag)); }
+    mid.appendChild(nm);
+    const sub = el('p', 'r-sub');
+    const [bc, bt] = stateBadge(state, type, lc, rc);
+    sub.appendChild(el('span', `badge ${bc}`, bt));
+    const tc = tinct(color);
+    if (tc) sub.appendChild(el('span', 'tinct', tc.name));
+    mid.appendChild(sub);
+    li.appendChild(mid);
+    const fig = el('div', 'r-fig');
+    const ms = el('p', 'r-ms');
+    if (med != null && state !== 'closed') { ms.textContent = String(Math.round(med)); ms.appendChild(el('small', '', 'ms')); }
+    else ms.textContent = '–';
+    fig.appendChild(ms);
+    const extra = [];
+    if (worst != null && state !== 'closed') extra.push(`worst ${Math.round(worst)}`);
+    if (re) extra.push(`relinks ${re}`);
+    if (since) extra.push(since);
+    if (extra.length) fig.appendChild(el('p', 'r-extra', extra.join(' · ')));
+    li.appendChild(fig);
+    return li;
+  }
+  function ago(t) {
+    const s = Math.max(0, Math.round((now() - t) / 1000));
+    return s < 60 ? `${s}s ago` : `${Math.round(s / 60)}m ago`;
+  }
+
+  const TICK_SVG = {
+    pass: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
+    warn: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v5.5M8 12.5v.1"/></svg>',
+    fail: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+  };
+
+  function render() {
+    const inSession = !!S.role;
+    $('home').hidden = inSession;
+    $('session').hidden = !inSession;
+    if (!inSession) return;
+
+    // who am I
+    const tc = tinct(S.color);
+    $('me-shield').querySelector('path').style.fill = tc ? `var(--t-${tc.key})` : 'var(--mortar)';
+    $('me-name').textContent = `${S.name}${S.role === 'host' ? ' · host' : ''}`;
+    const brokerTxt = { idle: 'starting', connecting: 'connecting', online: 'online', offline: 'offline, retrying' }[S.broker];
+    const wakeTxt = S.wake === 'on' ? 'Screen stays on' : 'Screen may dim';
+    $('me-meta').textContent = `${tc ? tc.name + ' banner · ' : ''}Matchmaker ${brokerTxt} · ${wakeTxt}`;
+    $('btn-sound').textContent = S.sound ? 'Sound on' : 'Sound off';
+    $('btn-sound').setAttribute('aria-pressed', String(S.sound));
+
+    // host card / guest card
+    $('host-card').hidden = S.role !== 'host';
+    $('guest-card').hidden = S.role !== 'guest';
+    if (S.role === 'host') {
+      $('big-code').textContent = S.code;
+      $('host-broker').textContent = S.broker === 'online' ? ''
+        : S.broker === 'offline' ? 'Cannot reach the matchmaker right now. Retrying. New phones can join once it is back.'
+        : 'Registering the code with the matchmaker…';
+    } else {
+      const l = S.links.get('host');
+      const big = $('guest-big'), sub = $('guest-sub');
+      let cls = 'wait', txt = 'Linking…', subTxt = `Looking for test ${S.code}.`;
+      if (S.fatal) { cls = 'bad'; txt = 'Cannot link'; subTxt = S.fatal; }
+      else if (l && l.state === 'open') { cls = 'ok'; txt = 'Linked'; subTxt = `To ${l.name}'s test ${S.code}.`; }
+      else if (l && l.state === 'stale') { cls = 'warn'; txt = 'Host not responding'; subTxt = 'Waiting for it to come back. Is the host phone locked?'; }
+      else if (S.broker === 'offline') { cls = 'warn'; txt = 'No matchmaker'; subTxt = "This phone can't reach the matchmaker. Check its internet; it keeps retrying."; }
+      else if (l && l.everOpen) { cls = 'warn'; txt = 'Relinking…'; subTxt = `Lost the link to ${l.name}. Trying again.`; }
+      else if (S.hostMissing) { cls = 'wait'; txt = 'Looking for the host…'; subTxt = `No host phone is online with code ${S.code} yet. Check the code, and keep the page open on the host phone.`; }
+      big.className = `big ${cls}`;
+      big.textContent = txt;
+      sub.textContent = subTxt;
+    }
+
+    // roster
+    const ul = $('roster');
+    ul.textContent = '';
+    if (S.role === 'host') {
+      $('roster-title').textContent = 'Linked phones';
+      if (!S.links.size) ul.appendChild(el('li', 'empty', 'No phones yet. Scan the code with another phone.'));
+      for (const l of S.links.values()) {
+        const d = delayStats(l);
+        ul.appendChild(rosterRow({ name: l.name, color: l.color, state: l.state, type: l.type, lc: l.lc, rc: l.rc,
+          med: d && d.med, worst: d && d.worst, re: l.reconnects, since: l.state === 'closed' ? ago(l.closedAt) : '' }));
+      }
+    } else {
+      $('roster-title').textContent = 'Phones in this test';
+      const l = S.links.get('host');
+      if (l && l.everOpen) {
+        const d = delayStats(l);
+        ul.appendChild(rosterRow({ name: l.name, color: l.color, tag: 'host', state: l.state, type: l.type, lc: l.lc, rc: l.rc,
+          med: d && d.med, worst: d && d.worst, re: l.reconnects }));
+      }
+      const others = S.roster && Array.isArray(S.roster.list) ? S.roster.list.filter((x) => x && x.cid !== S.cid) : [];
+      for (const o of others) {
+        ul.appendChild(rosterRow({ name: cleanText(o.name, 16), color: validColor(o.color), tag: 'to host',
+          state: ['open', 'stale', 'closed', 'connecting'].includes(o.state) ? o.state : 'connecting',
+          type: o.type === 'relay' || o.type === 'direct' ? o.type : null, lc: o.lc, rc: o.rc,
+          med: typeof o.med === 'number' ? o.med : null, worst: typeof o.worst === 'number' ? o.worst : null, re: o.re | 0 }));
+      }
+      if (!ul.children.length) ul.appendChild(el('li', 'empty', 'Nobody yet. This fills in once the link is up.'));
+    }
+
+    // bell
+    $('bell-note').textContent = S.bellNote;
+
+    // checks
+    const checks = computeChecks();
+    const ol = $('checks');
+    ol.textContent = '';
+    checks.forEach((c, i) => {
+      const li = document.createElement('li');
+      const tick = el('span', `tick ${c.s === 'idle' ? '' : c.s}`.trim());
+      if (TICK_SVG[c.s]) tick.innerHTML = TICK_SVG[c.s];
+      else tick.textContent = String(i + 1);
+      li.appendChild(tick);
+      const body = el('div');
+      body.appendChild(el('p', 'c-title', c.title));
+      body.appendChild(el('p', 'c-detail', c.d));
+      li.appendChild(body);
+      ol.appendChild(li);
+    });
+
+    const v = verdictFor(checks);
+    $('verdict').className = `panel verdict ${v.cls}`.trim();
+    $('v-title').textContent = v.title;
+    $('v-body').textContent = v.body;
+  }
+
+  function renderLog() {
+    const ol = $('log');
+    if (!ol) return;
+    ol.textContent = '';
+    for (const line of S.log) ol.appendChild(el('li', '', line));
+  }
+
+  function joinUrl() {
+    const u = new URL(location.href);
+    const keep = new URLSearchParams();
+    if (params.get('server')) keep.set('server', params.get('server'));
+    if (params.has('insecure')) keep.set('insecure', '1');
+    keep.set('join', S.code);
+    u.search = keep.toString();
+    u.hash = '';
+    return u.toString();
+  }
+  function renderQR() {
+    const box = $('qr');
+    box.textContent = '';
+    if (typeof qrcode !== 'function') return;
+    const qr = qrcode(0, 'M');
+    qr.addData(joinUrl());
+    qr.make();
+    const n = qr.getModuleCount();
+    const m = 3; // quiet zone, in modules
+    let d = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+    const size = n + 2 * m;
+    box.innerHTML = `<svg viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges" aria-hidden="true"><rect width="${size}" height="${size}"/><path d="${d}"/></svg>`;
+  }
+  function siteUrl() {
+    return (location.host + location.pathname).replace(/index\.html$/, '').replace(/nettest\/$/, '');
+  }
+
+  // ---------- session lifecycle ----------
+  function persist() { store.set('sl.session', JSON.stringify({ role: S.role, code: S.code })); }
+
+  function resetSession() {
+    clearTimeout(S.brokerTimer); S.brokerTimer = null;
+    clearTimeout(S.reTimer); S.reTimer = null;
+    const p = S.peer;
+    S.peer = null;
+    for (const l of S.links.values()) { try { if (l.conn) l.conn.close(); } catch { /* ignore */ } }
+    try { if (p) p.destroy(); } catch { /* ignore */ }
+    Object.assign(S, {
+      role: null, code: '', color: null, broker: 'idle', brokerPending: false, idRetries: 0, rePending: false,
+      hostMissing: false, fatal: '', roster: null, bellOut: false, bellIn: false, bellNote: '', lock: { state: 'idle' }, hiddenAt: 0,
+    });
+    S.links.clear();
+    S.myBells.clear();
+  }
+
+  function readName() {
+    const v = cleanText($('name').value, 16) || DEVICE.dev;
+    S.name = v;
+    store.lset('sl.name', v);
+  }
+
+  function startHost(resumeCode) {
+    resetSession();
+    if (!resumeCode) readName();
+    S.role = 'host';
+    S.code = resumeCode || randomCode();
+    S.color = 0;
+    persist();
+    log(resumeCode ? `Resumed hosting test ${S.code}.` : `Hosting test ${S.code}.`);
+    makePeer();
+    renderQR();
+    $('site-url').textContent = siteUrl();
+    keepAwake();
+    render();
+    window.scrollTo(0, 0);
+  }
+  function startGuest(code, resumed) {
+    resetSession();
+    if (!resumed) readName();
+    S.role = 'guest';
+    S.code = code;
+    persist();
+    log(resumed ? `Resumed joining test ${code}.` : `Joining test ${code}.`);
+    makePeer();
+    keepAwake();
+    render();
+    window.scrollTo(0, 0);
+  }
+  function leave() {
+    log('Left the test.');
+    resetSession();
+    store.del('sl.session');
+    const u = new URL(location.href);
+    u.searchParams.delete('join');
+    history.replaceState(null, '', u.pathname + (u.search || ''));
+    $('invite').hidden = true;
+    $('report-fallback').hidden = true;
+    $('copy-note').textContent = '';
+    render();
+  }
+
+  // ---------- wiring ----------
+  $('name').value = store.lget('sl.name') || DEVICE.dev;
+
+  $('btn-host').addEventListener('click', () => { primeAudio(); startHost(); });
+  $('btn-accept').addEventListener('click', () => { primeAudio(); startGuest(normCode(params.get('join'))); });
+  $('code').addEventListener('input', (e) => {
+    const v = normCode(e.target.value);
+    if (e.target.value !== v) e.target.value = v;
+    $('join-error').hidden = true;
+  });
+  $('join-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const code = normCode($('code').value);
+    if (code.length !== 4) {
+      $('join-error').textContent = 'Enter the 4-letter code shown on the host phone.';
+      $('join-error').hidden = false;
+      return;
+    }
+    primeAudio();
+    startGuest(code);
+  });
+  $('btn-bell').addEventListener('click', ringBell);
+  $('btn-sound').addEventListener('click', () => {
+    S.sound = !S.sound;
+    store.lset('sl.sound', S.sound ? 'on' : 'off');
+    if (S.sound) { primeAudio(); }
+    render();
+  });
+  $('btn-leave').addEventListener('click', leave);
+  $('btn-copy').addEventListener('click', () => {
+    const text = report();
+    const ok = () => { $('copy-note').textContent = 'Copied to the clipboard.'; $('report-fallback').hidden = true; };
+    const fallback = () => {
+      const ta = $('report-fallback');
+      ta.hidden = false;
+      ta.value = text;
+      ta.focus();
+      ta.select();
+      $('copy-note').textContent = "Couldn't copy automatically. The results are selected below; copy them from there.";
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, fallback);
+      else fallback();
+    } catch { fallback(); }
+  });
+  $('log-box').addEventListener('toggle', renderLog);
+  // Any tap re-arms audio and the wake lock (some browsers need a fresh gesture after unlocking).
+  document.addEventListener('pointerdown', () => { if (S.role) { primeAudio(); if (S.wake !== 'on') keepAwake(); } }, { passive: true });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!S.role) return;
+    if (document.hidden) {
+      S.hiddenAt = now();
+      S.linkedWhenHidden = liveLinks().length > 0;
+      log('Screen off or app in the background.');
+      return;
+    }
+    const away = S.hiddenAt ? now() - S.hiddenAt : 0;
+    S.hiddenAt = 0;
+    S.visibleAt = now();
+    log(`Back after ${(away / 1000).toFixed(1)} s.`);
+    if (away >= LOCK_MIN_MS && S.linkedWhenHidden) S.lock = { state: 'waiting', back: now(), away, heardAt: 0 };
+    keepAwake();
+    if (S.brokerPending) { S.brokerPending = false; scheduleBroker(100); }
+    const p = S.peer;
+    if (!p || p.destroyed || p.disconnected) scheduleBroker(300);
+    if (S.role === 'guest') {
+      if (S.rePending) { S.rePending = false; scheduleReconnect(100); }
+      const l = S.links.get('host');
+      if (!l || l.state === 'closed') scheduleReconnect(300);
+    }
+    render();
+  });
+
+  setInterval(pingTick, PING_MS);
+  setInterval(watchTick, 500);
+  setInterval(statsTick, 2000);
+
+  // ---------- boot ----------
+  const inviteCode = normCode(params.get('join'));
+  let saved = null;
+  try { saved = JSON.parse(store.get('sl.session') || 'null'); } catch { saved = null; }
+  S.name = store.lget('sl.name') || DEVICE.dev;
+
+  if (saved && (saved.role === 'host' || saved.role === 'guest') && normCode(saved.code).length === 4 &&
+      (!inviteCode || inviteCode === normCode(saved.code))) {
+    // The page was reloaded mid-test (iPhones sometimes do this after the screen locks): pick up where it was.
+    if (saved.role === 'host') startHost(normCode(saved.code));
+    else startGuest(normCode(saved.code), true);
+  } else {
+    if (inviteCode.length === 4) {
+      $('invite').hidden = false;
+      $('invite-code').textContent = inviteCode;
+      $('code').value = inviteCode;
+    }
+    render();
+  }
+
+  // Test hook for automated checks; harmless in normal use.
+  window.__linktest = { S, report };
+})();
+</script>
+</body>
+</html>
