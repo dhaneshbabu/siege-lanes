@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#151a22">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Powder Keg controller</title>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="phone.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-shield" viewBox="0 0 24 28"><path d="M2 2h20v10c0 7.5-4.6 11.7-10 14C6.6 23.7 2 19.5 2 12Z"/></symbol>
+  </defs>
+</svg>
+<main id="app">
+  <section id="s-connect" class="screen center">
+    <div class="brand">Powder Keg</div>
+    <p class="muted" id="connect-text">Connecting to the TV…</p>
+  </section>
+
+  <section id="s-full" class="screen center" hidden>
+    <div class="brand">Powder Keg</div>
+    <p>This game already has 4 knights.</p>
+    <p class="muted">Keep this page open. You'll get a seat when someone leaves.</p>
+  </section>
+
+  <section id="s-wait" class="screen center" hidden>
+    <div class="brand">Powder Keg</div>
+    <p>A match is on right now.</p>
+    <p class="muted">You'll join the next one. Keep this page open.</p>
+  </section>
+
+  <section id="s-join" class="screen" hidden>
+    <header class="join-head">
+      <div class="brand small">Powder Keg</div>
+      <div class="conn"><span class="led"></span><span>Connected to the TV</span></div>
+    </header>
+    <label for="name" class="label">Your name</label>
+    <input id="name" maxlength="12" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Your name">
+    <div class="knight">
+      <svg class="shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
+      <div>
+        <div class="knight-name" id="knight-name"></div>
+        <div class="muted" id="knight-sub"></div>
+      </div>
+    </div>
+    <div class="sides" id="sides" hidden>
+      <div class="label">Your side</div>
+      <div class="side-row">
+        <button class="side" id="side0" data-side="0"><span class="swatch blue"></span>Blue side</button>
+        <button class="side" id="side1" data-side="1"><span class="swatch red"></span>Red side</button>
+      </div>
+    </div>
+    <div class="join-foot">
+      <p class="muted" id="join-hint"></p>
+      <button id="ready" class="big">I'm ready</button>
+    </div>
+  </section>
+
+  <section id="s-pad" class="screen pad" hidden>
+    <div class="pad-top">
+      <svg class="shield" viewBox="0 0 24 28" aria-hidden="true"><use href="#i-shield"/></svg>
+      <span class="pad-name" id="pad-name"></span>
+      <span class="pad-info" id="pad-info"></span>
+    </div>
+    <div class="stick-zone" id="stick-zone">
+      <div class="stick-base" id="stick-base"><div class="stick-knob" id="stick-knob"></div></div>
+      <span class="zone-hint">Drag here to run</span>
+    </div>
+    <div class="keg-zone">
+      <button class="keg-btn" id="keg-btn" type="button" aria-label="Drop a keg">
+        <span class="keg-label">Keg</span>
+        <b class="keg-count" id="keg-count">1</b>
+      </button>
+    </div>
+    <div class="pad-overlay" id="pad-overlay" hidden></div>
+  </section>
+
+  <section id="s-result" class="screen center" hidden>
+    <div class="label" id="r-kicker">The match is over</div>
+    <div class="result" id="r-title">–</div>
+    <p class="muted" id="r-detail"></p>
+    <button id="again" class="big">Play again</button>
+    <p class="muted" id="again-hint">Or use the TV remote to choose what happens next.</p>
+  </section>
+</main>
+<script src="phone.js"></script>
+</body>
+</html>

@@ -37,6 +37,9 @@ It runs entirely as static files, so GitHub Pages hosts it:
     repairs). Your own knight runs ahead on a forecast, so the stick answers at once. A phone
     that locks or drops out gets a stand-in bot until it's back; reloading rejoins the match.
     Networking: `arena/src/net.js` (links), `arena/src/sync.js` (orders, snapshots, forecast).
+  - **On a TV** ([`tv/`](tv/README.md)): an Android TV app. The courtyard is on the big
+    screen and everyone plays with their phone as the controller (scan the QR code, nothing to
+    install). Bots fill empty seats; with no phones the remote plays a practice match.
 
 The phone-to-phone connection test lives at [`/nettest/`](https://dhaneshbabu.github.io/siege-lanes/nettest/).
 

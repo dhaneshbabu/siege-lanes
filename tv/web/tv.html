@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Powder Keg</title>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="tv.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-shield" viewBox="0 0 24 28"><path d="M2 2h20v10c0 7.5-4.6 11.7-10 14C6.6 23.7 2 19.5 2 12Z"/></symbol>
+  </defs>
+</svg>
+<div id="stage">
+  <!-- The match -->
+  <section id="match" hidden>
+    <canvas id="court"></canvas>
+    <div class="card" id="card0"></div>
+    <div class="card" id="card1"></div>
+    <div class="card" id="card2"></div>
+    <div class="card" id="card3"></div>
+    <div class="side-mid left" id="clockbox">
+      <div class="clock" id="clock">0:00</div>
+      <div class="clock-note" id="clock-note">Round 1</div>
+    </div>
+    <div class="side-mid right" id="infobox">
+      <div class="info-main" id="info-main"></div>
+      <div class="info-sub" id="info-sub"></div>
+    </div>
+    <div class="banner" id="banner" hidden>
+      <p class="banner-kicker" id="banner-kicker"></p>
+      <p class="banner-main" id="banner-main"></p>
+      <p class="banner-sub" id="banner-sub"></p>
+      <p class="banner-tip" id="banner-tip"></p>
+    </div>
+    <div class="toasts" id="toasts"></div>
+  </section>
+
+  <!-- Lobby -->
+  <section id="lobby" class="screen">
+    <div class="lobby-left">
+      <p class="eyebrow">Courtyard brawl</p>
+      <h1 class="title">Powder Keg</h1>
+      <canvas id="scene" class="scene" aria-hidden="true"></canvas>
+      <div class="join">
+        <canvas id="qr" width="300" height="300" aria-label="QR code to join"></canvas>
+        <div class="join-text">
+          <div class="join-head">Scan to join</div>
+          <div class="join-sub" id="join-sub">Or open <b id="join-url">…</b> on a phone that's on the same Wi-Fi.</div>
+          <div class="join-sub" id="join-none" hidden>Connect the TV to Wi-Fi or Ethernet so phones can join.</div>
+        </div>
+      </div>
+    </div>
+    <div class="lobby-right">
+      <div class="label-row"><span>Knights</span><span id="knight-count">0 of 4 phones</span></div>
+      <div class="slots">
+        <div class="slot" id="slot0"></div>
+        <div class="slot" id="slot1"></div>
+        <div class="slot" id="slot2"></div>
+        <div class="slot" id="slot3"></div>
+      </div>
+      <div class="menu" id="lobby-menu"></div>
+      <div class="desc" id="lobby-desc"></div>
+      <div class="status" id="lobby-status"></div>
+    </div>
+    <div class="hints">
+      <span class="key">▲ ▼</span>Choose
+      <span class="key">◀ ▶</span>Change
+      <span class="key">OK</span>Select
+      <span class="hint-right">Up to 4 phones · bots take the empty seats</span>
+    </div>
+  </section>
+
+  <!-- Pause -->
+  <section id="pause" class="screen dim" hidden>
+    <div class="dialog">
+      <h2>Paused</h2>
+      <div class="menu" id="pause-menu"></div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="results" class="screen dim" hidden>
+    <div class="results">
+      <p class="eyebrow" id="results-kicker"></p>
+      <h2 id="results-title"></h2>
+      <div class="table" id="results-table"></div>
+      <div class="menu horizontal" id="results-menu"></div>
+      <div class="status" id="results-status"></div>
+    </div>
+  </section>
+
+  <div id="fps" hidden></div>
+  <div id="conn" hidden>Reconnecting to the game server…</div>
+</div>
+<script src="tv.js"></script>
+</body>
+</html>

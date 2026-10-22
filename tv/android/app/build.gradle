@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'app.powderkeg'
+    compileSdk 35
+    buildToolsVersion '35.0.0'
+
+    defaultConfig {
+        applicationId 'app.powderkeg'
+        minSdk 24
+        targetSdk 35
+        versionCode 4
+        versionName '0.2.1'
+    }
+
+    // A fixed key kept with the project, so every build can update the installed app in place.
+    signingConfigs {
+        shared {
+            storeFile file('../keystore/powderkeg.jks')
+            storePassword 'powderkeg'
+            keyAlias 'powderkeg'
+            keyPassword 'powderkeg'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.shared
+        }
+        debug {
+            signingConfig signingConfigs.shared
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation 'org.nanohttpd:nanohttpd-websocket:2.3.1'
+}
